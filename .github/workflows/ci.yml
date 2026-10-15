@@ -1,0 +1,34 @@
+name: Build and package
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  ubuntu-2404:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build and validation tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake pkg-config qt6-base-dev qt6-declarative-dev libmpv-dev libgl1-mesa-dev libqt6svg6 desktop-file-utils appstream
+      - name: Validate desktop metadata
+        run: |
+          desktop-file-validate assets/io.github.teamkrope.LinuxPlayer.desktop
+          # The homepage warning is downgraded until a public repository URL exists.
+          appstreamcli validate --no-net --override='url-homepage-missing=info' assets/io.github.teamkrope.LinuxPlayer.metainfo.xml
+      - name: Configure and build
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --parallel
+          ctest --test-dir build --output-on-failure
+      - name: Build and inspect Debian package
+        run: |
+          cd build
+          cpack -G DEB
+          dpkg-deb -I linuxplayer_*.deb
+          dpkg-deb -c linuxplayer_*.deb
+          dpkg-deb -f linuxplayer_*.deb Depends | grep -F 'qml6-module-qtquick-controls'
+          dpkg-deb -f linuxplayer_*.deb Depends | grep -F 'libmpv2'
+          dpkg-deb -f linuxplayer_*.deb Depends | grep -F 'qt6-svg-plugins | libqt6svg6'

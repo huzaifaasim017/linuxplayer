@@ -1,0 +1,53 @@
+name: Bug report
+description: Report a reproducible LinuxPlayer problem
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "Please search existing issues first. Do not upload copyrighted films or private logs."
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Include the smallest video sample or file details that reproduces this, if possible.
+      placeholder: "1. Open a local MKV...\n2. Seek to..."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: LinuxPlayer version or commit
+    validations:
+      required: true
+  - type: input
+    id: distro
+    attributes:
+      label: Distribution and version
+      placeholder: "Ubuntu 24.04"
+    validations:
+      required: true
+  - type: dropdown
+    id: session
+    attributes:
+      label: Display session
+      options: [Wayland, X11, Other or unknown]
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Additional details
+      description: GPU, video/audio/subtitle formats, logs, and screenshots if relevant.

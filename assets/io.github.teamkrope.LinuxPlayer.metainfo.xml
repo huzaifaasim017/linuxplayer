@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.teamkrope.LinuxPlayer</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <developer id="io.github.teamkrope">
+    <name>TeamKrope</name>
+  </developer>
+  <name>LinuxPlayer</name>
+  <summary>A clean, modern player for local videos</summary>
+  <description>
+    <p>LinuxPlayer makes watching local videos feel focused and effortless. Its translucent controls stay out of the way while you watch.</p>
+    <p>Open files from the app or your file manager, seek precisely, and choose playback speed, audio tracks, and subtitles.</p>
+  </description>
+  <launchable type="desktop-id">io.github.teamkrope.LinuxPlayer.desktop</launchable>
+  <categories>
+    <category>AudioVideo</category>
+    <category>Video</category>
+  </categories>
+  <provides>
+    <binary>linuxplayer</binary>
+  </provides>
+  <content_rating type="oars-1.1"/>
+</component>

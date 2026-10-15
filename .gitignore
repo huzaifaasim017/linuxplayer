@@ -1,0 +1,17 @@
+# CMake and CPack output
+/build/
+/build-*/
+/cmake-build-*/
+/CMakeFiles/
+/CMakeCache.txt
+/cmake_install.cmake
+/CPackConfig.cmake
+/CPackSourceConfig.cmake
+/Testing/
+/*.deb
+
+# Editors and local files
+.idea/
+.vscode/
+*.swp
+*~
