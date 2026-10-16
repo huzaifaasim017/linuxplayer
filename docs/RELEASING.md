@@ -8,7 +8,7 @@ This checklist is for a tagged source release and a Debian package built on a su
 - Update the version in the top-level CMake project and release notes.
 - Check [PRODUCT.md](../PRODUCT.md) against implemented features. Remove claims for behavior not verified.
 - Verify that the project's GitHub profile has a working private Code of Conduct contact method.
-- Add the real public repository URL as the AppStream homepage in `assets/io.github.teamkrope.LinuxPlayer.metainfo.xml`; this is intentionally absent until the repository exists.
+- Check that the AppStream homepage in `assets/io.github.teamkrope.LinuxPlayer.metainfo.xml` points to the published repository.
 - Replace the CPack maintainer contact in `cmake/Packaging.cmake` with a monitored project address before distributing packages.
 
 ## 2. Build from a clean checkout

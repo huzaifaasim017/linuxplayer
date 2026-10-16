@@ -16,8 +16,7 @@ jobs:
       - name: Validate desktop metadata
         run: |
           desktop-file-validate assets/io.github.teamkrope.LinuxPlayer.desktop
-          # The homepage warning is downgraded until a public repository URL exists.
-          appstreamcli validate --no-net --override='url-homepage-missing=info' assets/io.github.teamkrope.LinuxPlayer.metainfo.xml
+          appstreamcli validate --no-net assets/io.github.teamkrope.LinuxPlayer.metainfo.xml
       - name: Configure and build
         run: |
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
