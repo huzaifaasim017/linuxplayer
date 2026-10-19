@@ -10,6 +10,18 @@ A modern, focused video player for Linux desktops. LinuxPlayer plays **local fil
 
 > **MVP status:** This repository is an early open source release. Check [PRODUCT.md](PRODUCT.md) for the intended first-release scope; release claims should only be made after the checks in [RELEASING.md](docs/RELEASING.md) pass.
 
+## Install this preview on Ubuntu 26.04
+
+In a terminal opened in this project folder, run **one command**:
+
+```bash
+sudo apt install ./linuxplayer_0.1.0_ubuntu26.04_amd64.deb
+```
+
+`apt` installs the player and its required runtime packages. Start it from your app menu or run `linuxplayer`. To remove it later, run `sudo apt remove linuxplayer`.
+
+This local preview package is built for **Ubuntu 26.04 on amd64**. The `.deb` is currently in the development workspace and is not included in a GitHub clone or release download yet. For other Ubuntu or Debian versions, use the source build steps below until a matching package is published.
+
 ## What the current app does
 
 - Open a local video from the app, command line, or drag and drop.
@@ -19,7 +31,7 @@ A modern, focused video player for Linux desktops. LinuxPlayer plays **local fil
 
 Useful keys: **Ctrl+O** opens a file; **Space/K** pauses; **Left/Right** skip 5 seconds; **J/L** skip 10 seconds; **Up/Down** adjust volume; **M** mutes; **F** toggles fullscreen; **Esc** leaves fullscreen. The app remembers playback position for local files and offers a Resume or Start over choice. A media library is outside this MVP.
 
-## Build on Ubuntu or Debian
+## Build from source on Ubuntu or Debian
 
 Install the build tools and development libraries:
 
@@ -45,7 +57,7 @@ You can pass a local video path as the first argument:
 
 LinuxPlayer uses distro-provided Qt and mpv libraries. Playback formats and hardware acceleration depend on how your distribution builds mpv/FFmpeg and on your graphics drivers.
 
-## Install or make a `.deb`
+## Install a source build or make a `.deb`
 
 For a local CMake install:
 
