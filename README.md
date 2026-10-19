@@ -8,19 +8,23 @@ A modern, focused video player for Linux desktops. LinuxPlayer plays **local fil
 
 ![Resume choice on Wayland](docs/screenshots/resume-wayland.png)
 
-> **MVP status:** This repository is an early open source release. Check [PRODUCT.md](PRODUCT.md) for the intended first-release scope; release claims should only be made after the checks in [RELEASING.md](docs/RELEASING.md) pass.
+> **Preview:** LinuxPlayer is still an early MVP. See [PRODUCT.md](PRODUCT.md) for its current scope.
 
-## Install this preview on Ubuntu 26.04
+## Install
 
-In a terminal opened in this project folder, run **one command**:
+The current `.deb` supports **Ubuntu 26.04 (amd64)**. [Download the package from GitHub Releases](https://github.com/huzaifaasim017/linuxplayer/releases/tag/v0.1.0), then install it from your Downloads folder:
 
 ```bash
-sudo apt install ./linuxplayer_0.1.0_ubuntu26.04_amd64.deb
+sudo apt install ~/Downloads/linuxplayer_0.1.0_ubuntu26.04_amd64.deb
 ```
 
-`apt` installs the player and its required runtime packages. Start it from your app menu or run `linuxplayer`. To remove it later, run `sudo apt remove linuxplayer`.
+Or download and install it with one terminal command:
 
-This local preview package is built for **Ubuntu 26.04 on amd64**. The `.deb` is currently in the development workspace and is not included in a GitHub clone or release download yet. For other Ubuntu or Debian versions, use the source build steps below until a matching package is published.
+```bash
+curl -fL https://github.com/huzaifaasim017/linuxplayer/releases/download/v0.1.0/linuxplayer_0.1.0_ubuntu26.04_amd64.deb -o /tmp/linuxplayer.deb && sudo apt install /tmp/linuxplayer.deb
+```
+
+`apt` installs the required runtime packages automatically. Open **LinuxPlayer** from your app menu or run `linuxplayer`. Remove it with `sudo apt remove linuxplayer`. Other Ubuntu and Debian versions can [build from source](#build-from-source-on-ubuntu-or-debian) while packages for those systems are being tested.
 
 ## What the current app does
 
