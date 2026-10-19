@@ -48,9 +48,9 @@ Check the launcher, file manager **Open With**, install and uninstall behavior, 
 
 ## 5. Publish
 
-- Tag the source commit with a version such as `v0.1.0`.
-- Attach the `.deb` built for each tested distribution and architecture to the GitHub release. Name assets so users can distinguish them.
-- Publish checksums, screenshots, a short demo, supported systems, known limitations, and source/build instructions.
+- Add release notes at `docs/releases/vX.Y.Z.md`, then push a matching `vX.Y.Z` tag. The release workflow builds on Ubuntu 26.04, checks the package, and publishes the `.deb` and SHA-256 checksum as a preview GitHub Release.
+- For other distribution and architecture packages, first add tested build jobs and distinct asset names.
+- Include supported systems, known limitations, source/build instructions, and any available demo or screenshots in the release notes.
 - Install each uploaded asset once more using the published download to catch packaging mistakes.
 
 Later, Flatpak/Flathub can be added as a separate distribution path after `.deb` releases are reliable.
