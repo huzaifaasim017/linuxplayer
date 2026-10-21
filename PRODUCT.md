@@ -16,6 +16,7 @@ Open a local video and watch it comfortably on Ubuntu. The first release should 
 - Play and pause; seek with a clear timeline; skip backward or forward; change volume and mute.
 - Switch playback speed, audio track, and subtitle track; load an external subtitle file.
 - Fullscreen and a clean control overlay that fades while watching.
+- Compact picture-in-picture player with playback continuity and a restore action.
 - Remember the last position of a local file, with a clear resume choice.
 - Show useful errors for unsupported files or missing codecs.
 - Provide sensible shortcuts, visible in a small help panel.
@@ -23,7 +24,7 @@ Open a local video and watch it comfortably on Ubuntu. The first release should 
 ## Later, after the core is reliable
 
 - Playlist and next episode flow.
-- Picture in picture, thumbnail previews, and subtitle styling.
+- Thumbnail previews and subtitle styling.
 - Network streams and online video links.
 - Media library, accounts, recommendations, or cloud sync.
 

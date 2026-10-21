@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(LinuxPlayer VERSION 0.2.1 LANGUAGES CXX)
+project(LinuxPlayer VERSION 0.3.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -22,6 +22,7 @@ qt_add_executable(linuxplayer
     src/main.cpp
     src/MpvItem.cpp
     src/MpvItem.h
+    src/WindowOperations.h
 )
 qt_add_resources(linuxplayer "qml_resources"
     PREFIX "/"

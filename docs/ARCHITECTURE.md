@@ -21,8 +21,9 @@ local file / file manager / command line
 
 | Path | Responsibility |
 | --- | --- |
-| `src/main.cpp` | Start Qt, register `MpvItem` for QML, open a command-line file. |
+| `src/main.cpp` | Start Qt, expose playback and window operations to QML, open a command-line file. |
 | `src/MpvItem.h` and `.cpp` | Own the libmpv handle and render context; expose playback state and commands to QML. |
+| `src/WindowOperations.h` | Ask the window system to move or resize the compact player from a pointer press. |
 | `qml/Main.qml` | Window layout, file actions, control overlay, settings menus, shortcuts, and focus behavior. |
 | `qml/components/` | Reusable interface components. |
 | `qml/icons/` | Interface icon assets. |
@@ -40,6 +41,8 @@ Resume positions are stored in the user's Qt settings under a hash of the local 
 ## Rendering and desktop integration
 
 `MpvItem` is a `QQuickFramebufferObject`. It uses libmpv's render API to draw into Qt Quick's OpenGL framebuffer, allowing QML controls to sit over video in the same scene. This requires a working OpenGL path under both Wayland and X11. Test those sessions separately when changing rendering, fullscreen, scaling, or overlay behavior.
+
+Mini-player mode resizes the existing `ApplicationWindow` and keeps the same `MpvItem`. `Main.qml` stores the normal geometry and window flags, then restores them on exit. `WindowOperations` calls Qt's native move and resize requests, which work with Wayland's compositor-managed positioning. The compositor can ignore the always-on-top hint.
 
 **Known technical constraint:** Qt documents `QQuickFramebufferObject` as a legacy, OpenGL-only class. `main.cpp` therefore forces Qt Quick to use OpenGL. This is a deliberate MVP tradeoff for a small render adapter, not a promise of Vulkan or software-renderer support. Future rendering work should evaluate a Qt 6 scene graph/QRhi path while preserving the `MpvItem` public playback API. See [Qt's class documentation](https://doc.qt.io/qt-6/qquickframebufferobject.html).
 

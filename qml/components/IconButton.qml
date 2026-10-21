@@ -17,12 +17,12 @@ AbstractButton {
 
     background: Rectangle {
         radius: control.prominent ? 14 : 12
-        color: control.down ? "#70ffffff"
-              : control.prominent ? (control.hovered ? "#738fbaff" : "#567fa9ff")
-              : control.hovered || control.activeFocus ? "#28ffffff"
-              : control.selected ? "#237fa9ff" : "transparent"
+        color: control.down ? "#56ffffff"
+              : control.prominent ? (control.hovered ? "#87b6a5ff" : "#61b6a5ff")
+              : control.hovered || control.activeFocus ? "#29ffffff"
+              : control.selected ? "#38b6a5ff" : "transparent"
         border.width: control.activeFocus ? 2 : control.prominent ? 1 : 0
-        border.color: control.activeFocus ? "#b9d2ff" : "#7fb0ff"
+        border.color: control.activeFocus ? "#d9d0ff" : "#b6a5ff"
         Behavior on color { ColorAnimation { duration: 150 } }
     }
 

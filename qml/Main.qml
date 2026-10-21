@@ -11,8 +11,8 @@ ApplicationWindow {
     id: window
     width: 1100
     height: 680
-    minimumWidth: 640
-    minimumHeight: 420
+    minimumWidth: miniMode ? 320 : 640
+    minimumHeight: miniMode ? 200 : 420
     visible: true
     title: player.mediaTitle.length ? player.mediaTitle + " · LinuxPlayer" : "LinuxPlayer"
     color: "#090b10"
@@ -24,13 +24,20 @@ ApplicationWindow {
     property bool draggingSeek: false
     property real seekPreview: 0
     property real rememberedVolume: 70
+    property int rememberedSubtitleId: 0
     property bool showRemaining: false
     property bool busyVisible: false
     property string toastMessage: ""
-    readonly property bool overlayVisible: hasMedia && controlsShown && !toolsHidden
-    readonly property color ink: "#f7f9ff"
-    readonly property color mutedInk: "#aeb8cb"
-    readonly property color accent: "#91b7ff"
+    property bool miniMode: false
+    property rect restoreGeometry: Qt.rect(0, 0, 1100, 680)
+    property int restoreFlags: Qt.Window
+    property bool restoreMaximized: false
+    property bool restoreFullscreen: false
+    readonly property bool overlayVisible: hasMedia && !miniMode && controlsShown && !toolsHidden
+    readonly property bool miniOverlayVisible: hasMedia && miniMode && controlsShown && !toolsHidden
+    readonly property color ink: "#f8f8ff"
+    readonly property color mutedInk: "#b7b5c4"
+    readonly property color accent: "#b6a5ff"
     readonly property bool compact: width < 780
 
     function timeText(seconds) {
@@ -61,8 +68,43 @@ ApplicationWindow {
             speedPopup.close()
             settingsPopup.close()
             helpPopup.close()
-            showToast("Controls hidden · move pointer or press H")
         } else revealControls()
+    }
+
+    function toggleMiniPlayer() {
+        if (!hasMedia) return
+        trackPopup.close()
+        speedPopup.close()
+        settingsPopup.close()
+        helpPopup.close()
+        if (miniMode) {
+            miniMode = false
+            flags = restoreFlags
+            showNormal()
+            x = restoreGeometry.x
+            y = restoreGeometry.y
+            width = restoreGeometry.width
+            height = restoreGeometry.height
+            if (restoreMaximized) showMaximized()
+            if (restoreFullscreen) showFullScreen()
+            if (!restoreMaximized && !restoreFullscreen) restoreSizeTimer.restart()
+        } else {
+            restoreSizeTimer.stop()
+            restoreGeometry = Qt.rect(x, y, width, height)
+            restoreFlags = flags
+            restoreMaximized = visibility === Window.Maximized
+            restoreFullscreen = visibility === Window.FullScreen
+            if (restoreMaximized || restoreFullscreen) showNormal()
+            miniMode = true
+            toolsHidden = false
+            flags = restoreFlags | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
+            width = 420
+            height = 256
+            showNormal()
+            raise()
+        }
+        controlsShown = true
+        revealControls()
     }
 
     function toggleMute() {
@@ -85,6 +127,8 @@ ApplicationWindow {
     }
 
     function toggleFullscreen() {
+        if (miniMode) toggleMiniPlayer()
+        restoreSizeTimer.stop()
         if (visibility === Window.FullScreen) showNormal()
         else showFullScreen()
         revealControls()
@@ -103,12 +147,50 @@ ApplicationWindow {
         revealControls()
     }
 
+    function jumpToFraction(fraction) {
+        if (!hasMedia || player.duration <= 0) return
+        player.seek(player.duration * fraction)
+        revealControls()
+    }
+
+    function toggleCaptions() {
+        if (!hasMedia) return
+        if (player.subtitleTrackId > 0) {
+            rememberedSubtitleId = player.subtitleTrackId
+            player.subtitleTrackId = 0
+            showToast("Subtitles off")
+        } else if (player.subtitleTracks.length > 0) {
+            let nextId = player.subtitleTracks[0].id
+            for (let i = 0; i < player.subtitleTracks.length; ++i) {
+                if (player.subtitleTracks[i].id === rememberedSubtitleId) {
+                    nextId = rememberedSubtitleId
+                    break
+                }
+            }
+            player.subtitleTrackId = nextId
+            showToast("Subtitles on")
+        } else showToast("No subtitle track")
+        revealControls()
+    }
+
+    Timer {
+        id: restoreSizeTimer
+        interval: 120
+        onTriggered: {
+            if (!window.miniMode && !window.restoreMaximized && !window.restoreFullscreen
+                    && window.visibility !== Window.FullScreen && window.visibility !== Window.Maximized) {
+                window.width = window.restoreGeometry.width
+                window.height = window.restoreGeometry.height
+            }
+        }
+    }
+
     Timer {
         id: hideTimer
         interval: 2700
         onTriggered: {
             if (window.hasMedia && !player.paused && !player.ended && !seekSlider.pressed
-                    && !dockHover.hovered && !headerHover.hovered
+                    && !dockHover.hovered && !headerHover.hovered && !miniHover.hovered
                     && !trackPopup.opened && !speedPopup.opened
                     && !settingsPopup.opened && !helpPopup.opened) {
                 window.controlsShown = false
@@ -258,7 +340,10 @@ ApplicationWindow {
             Text { text: "J / L   Skip 10 seconds"; color: window.mutedInk; font.pixelSize: 13 }
             Text { text: "↑ / ↓   Change volume"; color: window.mutedInk; font.pixelSize: 13 }
             Text { text: "M   Mute  ·  F   Fullscreen"; color: window.mutedInk; font.pixelSize: 13 }
+            Text { text: "C   Toggle subtitles"; color: window.mutedInk; font.pixelSize: 13 }
             Text { text: "H   Show or hide controls"; color: window.mutedInk; font.pixelSize: 13 }
+            Text { text: "I   Mini player"; color: window.mutedInk; font.pixelSize: 13 }
+            Text { text: "0–9   Jump through video"; color: window.mutedInk; font.pixelSize: 13 }
             Text { text: "S   Save frame  ·  R   Loop video"; color: window.mutedInk; font.pixelSize: 13 }
             Text { text: "[ / ]   Change speed"; color: window.mutedInk; font.pixelSize: 13 }
             Text { text: "Esc   Leave fullscreen"; color: window.mutedInk; font.pixelSize: 13 }
@@ -277,13 +362,26 @@ ApplicationWindow {
     Shortcut { sequence: "F"; onActivated: window.toggleFullscreen() }
     Shortcut { sequence: "Escape"; enabled: window.visibility === Window.FullScreen; onActivated: window.showNormal() }
     Shortcut { sequence: "M"; onActivated: window.toggleMute() }
+    Shortcut { sequence: "C"; enabled: window.hasMedia; onActivated: window.toggleCaptions() }
     Shortcut { sequence: "H"; enabled: window.hasMedia; onActivated: window.toggleTools() }
+    Shortcut { sequence: "I"; enabled: window.hasMedia; onActivated: window.toggleMiniPlayer() }
+    Shortcut { sequence: "Escape"; enabled: window.miniMode; onActivated: window.toggleMiniPlayer() }
     Shortcut { sequence: "S"; enabled: window.hasMedia; onActivated: screenshotDialog.open() }
     Shortcut { sequence: "R"; enabled: window.hasMedia; onActivated: { player.looping = !player.looping; window.showToast(player.looping ? "Loop on" : "Loop off") } }
     Shortcut { sequence: "["; enabled: window.hasMedia; onActivated: window.changeSpeed(-0.25) }
     Shortcut { sequence: "]"; enabled: window.hasMedia; onActivated: window.changeSpeed(0.25) }
     Shortcut { sequence: "Home"; enabled: window.hasMedia; onActivated: player.seek(0) }
     Shortcut { sequence: "End"; enabled: window.hasMedia && player.duration > 0; onActivated: player.seek(Math.max(0, player.duration - 1)) }
+    Shortcut { sequence: "0"; enabled: window.hasMedia; onActivated: window.jumpToFraction(0) }
+    Shortcut { sequence: "1"; enabled: window.hasMedia; onActivated: window.jumpToFraction(0.1) }
+    Shortcut { sequence: "2"; enabled: window.hasMedia; onActivated: window.jumpToFraction(0.2) }
+    Shortcut { sequence: "3"; enabled: window.hasMedia; onActivated: window.jumpToFraction(0.3) }
+    Shortcut { sequence: "4"; enabled: window.hasMedia; onActivated: window.jumpToFraction(0.4) }
+    Shortcut { sequence: "5"; enabled: window.hasMedia; onActivated: window.jumpToFraction(0.5) }
+    Shortcut { sequence: "6"; enabled: window.hasMedia; onActivated: window.jumpToFraction(0.6) }
+    Shortcut { sequence: "7"; enabled: window.hasMedia; onActivated: window.jumpToFraction(0.7) }
+    Shortcut { sequence: "8"; enabled: window.hasMedia; onActivated: window.jumpToFraction(0.8) }
+    Shortcut { sequence: "9"; enabled: window.hasMedia; onActivated: window.jumpToFraction(0.9) }
 
     MpvItem {
         id: player
@@ -393,15 +491,6 @@ ApplicationWindow {
                 GradientStop { position: 1; color: "#070a10" }
             }
         }
-        Rectangle {
-            width: Math.min(parent.width * 0.5, 520)
-            height: width
-            radius: width / 2
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.verticalCenter: parent.verticalCenter
-            color: "#19335c"
-            opacity: 0.23
-        }
         ColumnLayout {
             anchors.centerIn: parent
             width: Math.min(parent.width - 48, 440)
@@ -412,8 +501,8 @@ ApplicationWindow {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.bottomMargin: 24
                 radius: 22
-                color: "#759bef"
-                border.color: "#a4c0ff"
+                color: "#4a435f"
+                border.color: "#80719f"
                 Image {
                     anchors.centerIn: parent
                     source: "icons/play.svg"
@@ -441,25 +530,17 @@ ApplicationWindow {
                 onClicked: videoDialog.open()
                 background: Rectangle {
                     radius: 14
-                    color: openVideoButton.down ? "#acc8ff" : openVideoButton.hovered ? "#9ebeff" : "#8eb4ff"
+                    color: openVideoButton.down ? "#d7cbff" : openVideoButton.hovered ? "#c6b8ff" : "#b6a5ff"
                     Behavior on color { ColorAnimation { duration: 150 } }
                 }
                 contentItem: Text {
                     text: openVideoButton.text
-                    color: "#101c31"
+                    color: "#181524"
                     font.pixelSize: 14
                     font.weight: Font.DemiBold
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
                 }
-            }
-            Text {
-                text: "or drop a file here"
-                color: window.mutedInk
-                font.pixelSize: 12
-                horizontalAlignment: Text.AlignHCenter
-                Layout.fillWidth: true
-                Layout.topMargin: 14
             }
         }
     }
@@ -469,7 +550,7 @@ ApplicationWindow {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        height: 156
+        height: 130
         visible: window.hasMedia && opacity > 0.01
         opacity: window.overlayVisible ? 1 : 0
         gradient: Gradient {
@@ -484,14 +565,11 @@ ApplicationWindow {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.topMargin: 18
-        anchors.leftMargin: window.compact ? 16 : 28
-        anchors.rightMargin: window.compact ? 16 : 28
-        height: 54
-        radius: 18
-        color: "#b30d1320"
-        border.color: "#3bffffff"
-        border.width: 1
+        anchors.topMargin: 12
+        anchors.leftMargin: window.compact ? 16 : 22
+        anchors.rightMargin: window.compact ? 16 : 22
+        height: 46
+        color: "transparent"
         visible: window.hasMedia && opacity > 0.01
         opacity: window.overlayVisible ? 1 : 0
         enabled: window.overlayVisible
@@ -506,13 +584,13 @@ ApplicationWindow {
 
         RowLayout {
             anchors.fill: parent
-            anchors.leftMargin: 11
-            anchors.rightMargin: 10
+            anchors.leftMargin: 0
+            anchors.rightMargin: 0
             spacing: 10
             Text {
                 text: player.mediaTitle.length ? player.mediaTitle : "Untitled video"
                 color: window.ink
-                font.pixelSize: 14
+                font.pixelSize: 15
                 font.weight: Font.DemiBold
                 elide: Text.ElideMiddle
                 Layout.fillWidth: true
@@ -534,49 +612,28 @@ ApplicationWindow {
         }
     }
 
-    Button {
+    IconButton {
         id: revealButton
-        visible: window.hasMedia && !window.overlayVisible && window.showRevealHint
+        visible: window.hasMedia && !window.overlayVisible && !window.miniOverlayVisible && window.showRevealHint
         anchors.top: parent.top
         anchors.right: parent.right
         anchors.topMargin: 20
         anchors.rightMargin: 22
-        width: 156
+        width: 44
         height: 44
-        hoverEnabled: true
-        text: "Show controls"
+        iconName: "eye"
         Accessible.name: "Show controls"
+        ToolTip.visible: hovered
+        ToolTip.text: "Show controls (H)"
         onClicked: window.toolsHidden ? window.toggleTools() : window.revealControls()
-        background: Rectangle {
-            radius: 16
-            color: revealButton.hovered ? "#d5334564" : "#ba121b2b"
-            border.color: "#66a6c5ff"
-            Behavior on color { ColorAnimation { duration: 150 } }
-        }
-        contentItem: RowLayout {
-            spacing: 8
-            Image {
-                source: "icons/eye.svg"
-                sourceSize.width: Math.ceil(18 * Screen.devicePixelRatio)
-                sourceSize.height: Math.ceil(18 * Screen.devicePixelRatio)
-                Layout.preferredWidth: 18
-                Layout.preferredHeight: 18
-                fillMode: Image.PreserveAspectFit
-            }
-            Text {
-                text: revealButton.text
-                color: window.ink
-                font.pixelSize: 12
-                font.weight: Font.DemiBold
-            }
-        }
+        background: Rectangle { radius: 14; color: revealButton.hovered ? "#d92a3040" : "#bd131721"; border.color: "#55ffffff" }
     }
 
     Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        height: 220
+        height: 180
         visible: window.hasMedia && opacity > 0.01
         opacity: window.overlayVisible ? 1 : 0
         gradient: Gradient {
@@ -591,13 +648,13 @@ ApplicationWindow {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.leftMargin: window.compact ? 15 : 28
-        anchors.rightMargin: window.compact ? 15 : 28
-        anchors.bottomMargin: window.compact ? 16 : 24
-        height: 116
-        radius: 24
-        color: "#df111824"
-        border.color: "#55ffffff"
+        anchors.leftMargin: window.compact ? 10 : 20
+        anchors.rightMargin: window.compact ? 10 : 20
+        anchors.bottomMargin: window.compact ? 10 : 16
+        height: 100
+        radius: 18
+        color: "#ba101119"
+        border.color: "#38ffffff"
         border.width: 1
         visible: window.hasMedia && opacity > 0.01
         opacity: window.overlayVisible ? 1 : 0
@@ -613,11 +670,11 @@ ApplicationWindow {
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.leftMargin: window.compact ? 13 : 18
-            anchors.rightMargin: window.compact ? 13 : 18
-            anchors.topMargin: 11
-            anchors.bottomMargin: 10
-            spacing: 5
+            anchors.leftMargin: window.compact ? 10 : 14
+            anchors.rightMargin: window.compact ? 10 : 14
+            anchors.topMargin: 8
+            anchors.bottomMargin: 6
+            spacing: 2
 
             RowLayout {
                 Layout.fillWidth: true
@@ -805,6 +862,13 @@ ApplicationWindow {
                     onClicked: { speedPopup.close(); trackPopup.close(); settingsPopup.open(); window.revealControls() }
                 }
                 IconButton {
+                    iconName: "picture-in-picture"
+                    Accessible.name: "Mini player"
+                    ToolTip.visible: hovered
+                    ToolTip.text: "Mini player (I)"
+                    onClicked: window.toggleMiniPlayer()
+                }
+                IconButton {
                     iconName: window.visibility === Window.FullScreen ? "minimize" : "fullscreen"
                     Accessible.name: window.visibility === Window.FullScreen ? "Leave fullscreen" : "Fullscreen"
                     ToolTip.visible: hovered
@@ -812,6 +876,172 @@ ApplicationWindow {
                     onClicked: window.toggleFullscreen()
                 }
             }
+        }
+    }
+
+    // Compact picture-in-picture mode keeps the same playback item and timeline.
+    Item {
+        id: miniControls
+        anchors.fill: parent
+        visible: window.miniOverlayVisible
+        HoverHandler {
+            id: miniHover
+            onHoveredChanged: if (hovered) window.revealControls()
+        }
+
+        Rectangle {
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: 62
+            gradient: Gradient {
+                GradientStop { position: 0; color: "#d5000000" }
+                GradientStop { position: 1; color: "#00000000" }
+            }
+        }
+        MouseArea {
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: restoreMiniButton.left
+            height: 48
+            cursorShape: Qt.OpenHandCursor
+            onPressed: windowOperations.startMove(window)
+        }
+        Text {
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: restoreMiniButton.left
+            anchors.topMargin: 15
+            anchors.leftMargin: 16
+            text: player.mediaTitle
+            color: window.ink
+            font.pixelSize: 12
+            font.weight: Font.DemiBold
+            elide: Text.ElideMiddle
+        }
+        IconButton {
+            id: restoreMiniButton
+            anchors.top: parent.top
+            anchors.right: parent.right
+            anchors.topMargin: 5
+            anchors.rightMargin: 6
+            iconName: "restore"
+            Accessible.name: "Restore player"
+            ToolTip.visible: hovered
+            ToolTip.text: "Restore player (I)"
+            onClicked: window.toggleMiniPlayer()
+        }
+
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: 94
+            gradient: Gradient {
+                GradientStop { position: 0; color: "#00000000" }
+                GradientStop { position: 1; color: "#e8000000" }
+            }
+        }
+        ColumnLayout {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.leftMargin: 13
+            anchors.rightMargin: 13
+            anchors.bottomMargin: 8
+            spacing: 2
+            Slider {
+                id: miniSeek
+                Layout.fillWidth: true
+                Layout.preferredHeight: 20
+                from: 0
+                to: Math.max(1, player.duration)
+                value: window.draggingSeek ? window.seekPreview : player.position
+                enabled: player.duration > 0
+                hoverEnabled: true
+                onPressedChanged: {
+                    if (pressed) {
+                        window.seekPreview = value
+                        window.draggingSeek = true
+                    } else if (window.draggingSeek) {
+                        const destination = window.seekPreview
+                        window.draggingSeek = false
+                        player.seek(destination)
+                        window.revealControls()
+                    }
+                }
+                onMoved: { window.seekPreview = value; window.revealControls() }
+                background: Rectangle {
+                    x: miniSeek.leftPadding
+                    y: miniSeek.topPadding + miniSeek.availableHeight / 2 - height / 2
+                    width: miniSeek.availableWidth
+                    height: miniSeek.hovered || miniSeek.pressed ? 5 : 3
+                    radius: height / 2
+                    color: "#77ffffff"
+                    Rectangle { width: parent.width * miniSeek.visualPosition; height: parent.height; radius: parent.radius; color: window.accent }
+                }
+                handle: Rectangle {
+                    x: miniSeek.leftPadding + miniSeek.visualPosition * (miniSeek.availableWidth - width)
+                    y: miniSeek.topPadding + miniSeek.availableHeight / 2 - height / 2
+                    width: miniSeek.hovered || miniSeek.pressed ? 12 : 7
+                    height: width
+                    radius: width / 2
+                    color: window.ink
+                }
+                ToolTip.visible: hovered || pressed
+                ToolTip.text: window.timeText(value)
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 2
+                IconButton {
+                    iconName: player.paused || player.ended ? "play" : "pause"
+                    Accessible.name: player.paused || player.ended ? "Play" : "Pause"
+                    ToolTip.visible: hovered
+                    ToolTip.text: player.ended ? "Replay" : player.paused ? "Play" : "Pause"
+                    onClicked: player.togglePause()
+                }
+                IconButton {
+                    iconName: "rewind"
+                    Accessible.name: "Back 10 seconds"
+                    ToolTip.visible: hovered
+                    ToolTip.text: "Back 10 seconds"
+                    onClicked: window.jump(-10)
+                }
+                IconButton {
+                    iconName: "forward"
+                    Accessible.name: "Forward 10 seconds"
+                    ToolTip.visible: hovered
+                    ToolTip.text: "Forward 10 seconds"
+                    onClicked: window.jump(10)
+                }
+                Item { Layout.fillWidth: true }
+                Text { text: window.timeText(player.position) + " / " + window.timeText(player.duration); color: window.ink; font.pixelSize: 11; font.family: "monospace" }
+            }
+        }
+    }
+
+    Item {
+        visible: window.miniMode
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        width: 26
+        height: 26
+        Image {
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.rightMargin: 2
+            anchors.bottomMargin: 2
+            width: 15
+            height: 15
+            source: "icons/resize.svg"
+            sourceSize: Qt.size(Math.ceil(15 * Screen.devicePixelRatio), Math.ceil(15 * Screen.devicePixelRatio))
+            opacity: 0.72
+        }
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.SizeFDiagCursor
+            onPressed: windowOperations.startResize(window)
         }
     }
 
@@ -1012,7 +1242,7 @@ ApplicationWindow {
         visible: window.toastMessage.length > 0
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: window.overlayVisible ? 154 : 24
+        anchors.bottomMargin: window.miniMode ? 104 : window.overlayVisible ? 128 : 24
         width: toastText.implicitWidth + 34
         height: 39
         radius: 13

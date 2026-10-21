@@ -20,7 +20,7 @@ Prefer a manual install? Download a `.deb` from the [latest release](https://git
 
 ![LinuxPlayer playing a video](docs/screenshots/playback-wayland.png)
 
-Open a video with **Open video**, drag a file into the window, or open a video with LinuxPlayer from your file manager. The player has seeking, speed, audio and subtitle tracks, resume, fullscreen, and a hideable control dock. Press **H** to hide or show controls; press **Space** to play or pause. A finished video plays again from the start when you press Play.
+Open a video with **Open video**, drag a file into the window, or open it from your file manager. The player has seeking, speed, audio and subtitle tracks, resume, fullscreen, and a compact mini-player. Press **Space** to play or pause, **H** to hide or show controls, **I** for the mini-player, and **C** for subtitles. Number keys jump through the video. A finished video plays again from the start when you press Play.
 
 ## For developers
 
