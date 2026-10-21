@@ -29,6 +29,8 @@ ApplicationWindow {
     property bool busyVisible: false
     property string toastMessage: ""
     property bool miniMode: false
+    property real canvasRatio: 0
+    property string canvasLabel: "Original"
     property rect restoreGeometry: Qt.rect(0, 0, 1100, 680)
     property int restoreFlags: Qt.Window
     property bool restoreMaximized: false
@@ -68,6 +70,7 @@ ApplicationWindow {
             speedPopup.close()
             settingsPopup.close()
             helpPopup.close()
+            ratioPopup.close()
         } else revealControls()
     }
 
@@ -77,6 +80,7 @@ ApplicationWindow {
         speedPopup.close()
         settingsPopup.close()
         helpPopup.close()
+        ratioPopup.close()
         if (miniMode) {
             miniMode = false
             flags = restoreFlags
@@ -124,6 +128,24 @@ ApplicationWindow {
     function showToast(message) {
         toastMessage = message
         toastTimer.restart()
+    }
+
+    function selectCanvas(label, ratio) {
+        canvasLabel = label
+        canvasRatio = ratio
+        ratioPopup.close()
+        showToast(label + " preview")
+        revealControls()
+    }
+
+    function makeDefaultPlayer() {
+        showToast("Updating video defaults…")
+        desktopIntegration.setAsDefaultVideoPlayer()
+    }
+
+    Connections {
+        target: desktopIntegration
+        function onDefaultPlayerFinished(success, message) { window.showToast(message) }
     }
 
     function toggleFullscreen() {
@@ -192,7 +214,7 @@ ApplicationWindow {
             if (window.hasMedia && !player.paused && !player.ended && !seekSlider.pressed
                     && !dockHover.hovered && !headerHover.hovered && !miniHover.hovered
                     && !trackPopup.opened && !speedPopup.opened
-                    && !settingsPopup.opened && !helpPopup.opened) {
+                    && !settingsPopup.opened && !helpPopup.opened && !ratioPopup.opened) {
                 window.controlsShown = false
                 window.showRevealHint = false
             }
@@ -346,11 +368,13 @@ ApplicationWindow {
             Text { text: "0–9   Jump through video"; color: window.mutedInk; font.pixelSize: 13 }
             Text { text: "S   Save frame  ·  R   Loop video"; color: window.mutedInk; font.pixelSize: 13 }
             Text { text: "[ / ]   Change speed"; color: window.mutedInk; font.pixelSize: 13 }
+            Text { text: "F1   Keyboard shortcuts"; color: window.mutedInk; font.pixelSize: 13 }
             Text { text: "Esc   Leave fullscreen"; color: window.mutedInk; font.pixelSize: 13 }
         }
     }
 
     Shortcut { sequences: [StandardKey.Open]; onActivated: videoDialog.open() }
+    Shortcut { sequence: "F1"; onActivated: helpPopup.open() }
     Shortcut { sequence: "Space"; enabled: window.hasMedia; onActivated: { player.togglePause(); window.revealControls() } }
     Shortcut { sequence: "K"; enabled: window.hasMedia; onActivated: { player.togglePause(); window.revealControls() } }
     Shortcut { sequence: "Left"; onActivated: window.jump(-5) }
@@ -383,10 +407,16 @@ ApplicationWindow {
     Shortcut { sequence: "8"; enabled: window.hasMedia; onActivated: window.jumpToFraction(0.8) }
     Shortcut { sequence: "9"; enabled: window.hasMedia; onActivated: window.jumpToFraction(0.9) }
 
-    MpvItem {
-        id: player
-        objectName: "player"
-        anchors.fill: parent
+    Item {
+        id: previewCanvas
+        anchors.centerIn: parent
+        width: window.canvasRatio <= 0 ? window.width : Math.min(window.width, window.height * window.canvasRatio)
+        height: window.canvasRatio <= 0 ? window.height : Math.min(window.height, window.width / window.canvasRatio)
+        clip: true
+        MpvItem {
+            id: player
+            objectName: "player"
+            anchors.fill: parent
         onErrorOccurred: message => window.showToast(message)
         onResumeSuggested: seconds => {
             resumePopup.resumeSeconds = seconds
@@ -399,6 +429,7 @@ ApplicationWindow {
                 hideTimer.stop()
                 window.revealControls()
             }
+        }
         }
     }
 
@@ -541,6 +572,15 @@ ApplicationWindow {
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
                 }
+            }
+            Button {
+                id: emptyDefaultButton
+                text: "Make default video player"
+                Layout.alignment: Qt.AlignHCenter
+                Layout.topMargin: 10
+                onClicked: window.makeDefaultPlayer()
+                background: Rectangle { radius: 10; color: emptyDefaultButton.hovered ? "#273247" : "transparent" }
+                contentItem: Text { text: emptyDefaultButton.text; color: window.mutedInk; font.pixelSize: 12; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
             }
         }
     }
@@ -1149,11 +1189,75 @@ ApplicationWindow {
     }
 
     Popup {
+        id: ratioPopup
+        x: Math.max(16, window.width - width - 24)
+        y: Math.max(16, controls.y - height - 12)
+        width: Math.min(332, window.width - 32)
+        height: Math.min(435, Math.max(180, controls.y - headerBar.y - headerBar.height - 24))
+        padding: 12
+        focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        onOpened: window.revealControls()
+        background: Rectangle { radius: 20; color: "#ef111824"; border.color: "#5bffffff" }
+        contentItem: Flickable {
+            contentWidth: width
+            contentHeight: ratioColumn.implicitHeight
+            clip: true
+            ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+            Column {
+                id: ratioColumn
+                width: parent.width
+                spacing: 4
+                Text { text: "CANVAS PREVIEW"; color: window.mutedInk; font.pixelSize: 11; font.weight: Font.DemiBold; font.letterSpacing: 1.4; leftPadding: 9; bottomPadding: 6 }
+                Repeater {
+                    model: [
+                        { label: "Original", ratio: 0, use: "Window size" },
+                        { label: "16:9", ratio: 16/9, use: "YouTube · Facebook landscape" },
+                        { label: "9:16", ratio: 9/16, use: "Reels · Shorts · Stories" },
+                        { label: "1:1", ratio: 1, use: "Instagram · square posts" },
+                        { label: "4:5", ratio: 4/5, use: "Instagram · Facebook feed" },
+                        { label: "3:4", ratio: 3/4, use: "Portrait posts" },
+                        { label: "2:1", ratio: 2, use: "Etsy listing video" },
+                        { label: "1:2", ratio: 1/2, use: "Etsy portrait video" },
+                        { label: "1.91:1", ratio: 1.91, use: "Wide social post" }
+                    ]
+                    delegate: Button {
+                        required property var modelData
+                        width: ratioColumn.width
+                        height: 43
+                        onClicked: window.selectCanvas(modelData.label, modelData.ratio)
+                        background: Rectangle { radius: 11; color: parent.hovered ? "#334f76" : window.canvasLabel === modelData.label ? "#2d4364" : "transparent" }
+                        contentItem: RowLayout {
+                            spacing: 8
+                            Text { text: modelData.label; color: window.canvasLabel === modelData.label ? window.accent : window.ink; font.pixelSize: 13; font.weight: Font.DemiBold; Layout.preferredWidth: 70 }
+                            Text { text: modelData.use; color: window.mutedInk; font.pixelSize: 12; elide: Text.ElideRight; Layout.fillWidth: true }
+                        }
+                    }
+                }
+                Rectangle { width: ratioColumn.width - 4; height: 1; color: "#30ffffff" }
+                RowLayout {
+                    width: ratioColumn.width
+                    spacing: 7
+                    Text { text: "Custom"; color: window.ink; font.pixelSize: 13; Layout.preferredWidth: 53 }
+                    SpinBox { id: ratioWidth; from: 1; to: 9999; value: 16; editable: true; Layout.preferredWidth: 68; Accessible.name: "Custom ratio width" }
+                    Text { text: ":"; color: window.mutedInk }
+                    SpinBox { id: ratioHeight; from: 1; to: 9999; value: 9; editable: true; Layout.preferredWidth: 68; Accessible.name: "Custom ratio height" }
+                    Button {
+                        text: "Apply"
+                        onClicked: window.selectCanvas(ratioWidth.value + ":" + ratioHeight.value, ratioWidth.value / ratioHeight.value)
+                    }
+                }
+                Text { text: "Preview only · source file is unchanged"; color: window.mutedInk; font.pixelSize: 11; leftPadding: 9; topPadding: 7 }
+            }
+        }
+    }
+
+    Popup {
         id: settingsPopup
         x: Math.max(16, window.width - width - 24)
         y: Math.max(16, controls.y - height - 12)
         width: 272
-        height: Math.min(292, Math.max(160, controls.y - headerBar.y - headerBar.height - 24))
+        height: Math.min(390, Math.max(160, controls.y - headerBar.y - headerBar.height - 24))
         padding: 13
         focus: true
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
@@ -1196,7 +1300,30 @@ ApplicationWindow {
                         Text { text: player.videoFill ? "FILL" : "FIT"; color: player.videoFill ? window.accent : window.mutedInk; font.pixelSize: 11; font.weight: Font.DemiBold }
                     }
                 }
+                Button {
+                    id: ratioOption
+                    width: settingsPopup.width - 26; height: 42
+                    hoverEnabled: true
+                    onClicked: { settingsPopup.close(); ratioPopup.open() }
+                    background: Rectangle { radius: 11; color: ratioOption.hovered ? "#334f76" : "transparent" }
+                    contentItem: RowLayout {
+                        Text { text: "▣"; color: window.accent; font.pixelSize: 19; Layout.preferredWidth: 18 }
+                        Text { text: "Canvas ratio"; color: window.ink; font.pixelSize: 13; Layout.fillWidth: true }
+                        Text { text: window.canvasLabel; color: window.mutedInk; font.pixelSize: 11 }
+                    }
+                }
                 Rectangle { width: settingsPopup.width - 28; height: 1; color: "#30ffffff" }
+                Button {
+                    id: defaultOption
+                    width: settingsPopup.width - 26; height: 40
+                    hoverEnabled: true
+                    onClicked: { settingsPopup.close(); window.makeDefaultPlayer() }
+                    background: Rectangle { radius: 11; color: defaultOption.hovered ? "#334f76" : "transparent" }
+                    contentItem: RowLayout {
+                        Text { text: "◉"; color: window.accent; font.pixelSize: 17; Layout.preferredWidth: 18 }
+                        Text { text: "Make default video player"; color: window.ink; font.pixelSize: 13; Layout.fillWidth: true }
+                    }
+                }
                 Button {
                     id: screenshotOption
                     width: settingsPopup.width - 26; height: 40

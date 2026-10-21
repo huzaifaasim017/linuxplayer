@@ -1,4 +1,4 @@
-# LinuxPlayer — first release brief
+# LinuxPlayer — product direction
 
 ## Product
 
@@ -9,6 +9,10 @@ This is a desktop application, not a website or browser extension. Video decodin
 ## First release promise
 
 Open a local video and watch it comfortably on Ubuntu. The first release should work well on both Wayland and X11, with mouse and keyboard.
+
+## Current experience
+
+The player now includes the first-release playback controls, resume, a compact mini-player, delayed loading feedback, and a single-click replay after a video ends. Users can choose a centered canvas preview ratio for common social layouts or a custom width:height ratio. This preview does not create a new video file. An explicit action sets LinuxPlayer as the default handler for supported video MIME types. The empty state keeps **Open video** primary and offers default-player setup as a quiet secondary action.
 
 ## First release scope
 
@@ -36,7 +40,7 @@ Target Ubuntu 24.04 LTS and a second current Debian based system during the firs
 
 ## Design direction
 
-One video canvas, one compact overlay. Large, readable timeline and controls. Strong contrast over dark and bright frames. No permanent sidebar, heavy chrome, or settings wall. Keyboard and touch targets need deliberate sizes. The empty state should offer one obvious action: Open video.
+One video canvas, one compact overlay. Large, readable timeline and controls. Strong contrast over dark and bright frames. No permanent sidebar, heavy chrome, or settings wall. Keyboard and touch targets need deliberate sizes. The empty state should make **Open video** the obvious primary action.
 
 ## Release route
 

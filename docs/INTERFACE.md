@@ -1,6 +1,6 @@
 # Interface behavior
 
-LinuxPlayer keeps the video as the full window canvas. The floating header identifies the file, while the bottom dock contains the timeline and main controls. Secondary actions live in compact popups so the video stays clear.
+LinuxPlayer normally keeps the video as the full window canvas. The floating header identifies the file, while the bottom dock contains the timeline and main controls. Secondary actions live in compact popups so the video stays clear.
 
 ## Control visibility
 
@@ -11,7 +11,15 @@ LinuxPlayer keeps the video as the full window canvas. The floating header ident
 
 ## Playback actions
 
-The dock has play/pause, ten-second skip buttons, elapsed and duration times, volume, speed, audio/subtitle tracks, more options, mini-player, and fullscreen. Click the duration to switch between total and remaining time. The more menu provides loop, fit/fill, screenshot, external subtitles, and shortcut help. The eye button is intentionally separate from fullscreen.
+The dock has play/pause, ten-second skip buttons, elapsed and duration times, volume, speed, audio/subtitle tracks, more options, mini-player, and fullscreen. Click the duration to switch between total and remaining time. The more menu provides loop, fit/fill, canvas ratios, default-player setup, screenshot, external subtitles, and shortcut help. **F1** opens the shortcut list. The eye button is intentionally separate from fullscreen.
+
+## Canvas preview and file associations
+
+**More options → Canvas ratio** opens a scrollable preset list with original window size, 16:9, 9:16, 1:1, 4:5, 3:4, 2:1, 1:2, and 1.91:1. Width and height fields allow any positive custom ratio. The preview canvas is centered and maximized inside the available window; the rest of the window stays dark. **Fit video** letterboxes the source inside it; **Fill video canvas** crops the playback view. Neither setting changes the media file, screenshots from libmpv, or an exported file. Preset names are examples of common platform layouts, not an upload-compliance guarantee.
+
+The examples are grounded in [YouTube's standard 16:9 player](https://support.google.com/youtube/answer/6375112), [Meta's 9:16 Reels guidance](https://www.facebook.com/business/ads/facebook-instagram-reels-ads), and [Etsy's 2:1 or 1:2 listing-video guidance](https://help.etsy.com/hc/en-in/articles/360053206073-How-to-Add-a-Listing-Video). Platform requirements can change; use their current upload guidance before publishing.
+
+**Make default video player** runs only on a user click. It uses `xdg-mime` to set and verify the video MIME types listed in the installed desktop entry, then reports success or failure. The option requires an installed package and `xdg-utils`; a source-tree run cannot set an uninstalled desktop entry as default. Desktop environments may also expose their own default-app settings.
 
 ## Mini-player
 

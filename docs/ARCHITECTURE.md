@@ -23,6 +23,7 @@ local file / file manager / command line
 | --- | --- |
 | `src/main.cpp` | Start Qt, expose playback and window operations to QML, open a command-line file. |
 | `src/MpvItem.h` and `.cpp` | Own the libmpv handle and render context; expose playback state and commands to QML. |
+| `src/DesktopIntegration.h` and `.cpp` | Set and verify user-requested video MIME defaults through `xdg-mime`. |
 | `src/WindowOperations.h` | Ask the window system to move or resize the compact player from a pointer press. |
 | `qml/Main.qml` | Window layout, file actions, control overlay, settings menus, shortcuts, and focus behavior. |
 | `qml/components/` | Reusable interface components. |
@@ -46,7 +47,9 @@ Mini-player mode resizes the existing `ApplicationWindow` and keeps the same `Mp
 
 **Known technical constraint:** Qt documents `QQuickFramebufferObject` as a legacy, OpenGL-only class. `main.cpp` therefore forces Qt Quick to use OpenGL. This is a deliberate MVP tradeoff for a small render adapter, not a promise of Vulkan or software-renderer support. Future rendering work should evaluate a Qt 6 scene graph/QRhi path while preserving the `MpvItem` public playback API. See [Qt's class documentation](https://doc.qt.io/qt-6/qquickframebufferobject.html).
 
-The desktop entry uses the same application ID as the icon and AppStream metadata: `io.github.teamkrope.LinuxPlayer`. Keep these names aligned when renaming the app. It declares video MIME types so file managers can offer **Open With**. It does not claim to become the user's default player automatically.
+The desktop entry uses the same application ID as the icon and AppStream metadata: `io.github.teamkrope.LinuxPlayer`. Keep these names aligned when renaming the app. It declares video MIME types so file managers can offer **Open With**. The `DesktopIntegration` service changes per-user defaults only after an explicit click; it verifies the installed desktop entry and each `xdg-mime` association asynchronously so the UI stays responsive.
+
+Canvas presets are QML data because they only change the size of the centered `MpvItem` parent. The playback adapter's existing fit/fill control handles source framing within that parent. Presets do not alter media bytes or capture/export settings.
 
 ## Extending the MVP
 

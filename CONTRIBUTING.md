@@ -6,7 +6,7 @@ Thanks for helping make LinuxPlayer better. We welcome bug reports, usability fe
 
 Search existing issues and pull requests for related work. For a large feature or architectural change, open an issue with the user problem, proposed behavior, and scope so maintainers and contributors can agree on a small first slice. Smaller fixes can go straight to a pull request.
 
-The [first-release brief](PRODUCT.md) describes current scope. Keep additions focused on local playback and the watching experience.
+The [product direction](PRODUCT.md) describes current scope. Keep additions focused on local playback and the watching experience.
 
 ## Build and test
 
@@ -18,7 +18,7 @@ For a quick QML startup check, run `ctest --test-dir build --output-on-failure`.
 2. Keep playback engine calls in the C++ playback layer; expose UI state and actions to QML through its public interface.
 3. Run a fresh CMake build and any available tests.
 4. Manually try the changed behavior with a local file, including keyboard navigation if the UI changed.
-   For control changes, check the visible dock, automatic fade, explicit hide/show, fullscreen, and a narrow window. See the [interface guide](docs/INTERFACE.md).
+   For control changes, check the visible dock, automatic fade, explicit hide/show, fullscreen, and a narrow window. Check canvas presets with both portrait and landscape media. For default-app changes, use an isolated `XDG_CONFIG_HOME` so your own desktop settings stay intact. See the [interface guide](docs/INTERFACE.md).
 5. Include the commands you ran and their results in the pull request.
 
 If a problem occurs only under Wayland, X11, GNOME, KDE, or a particular GPU, say so. A short reproducible sample is more useful than a large film file.

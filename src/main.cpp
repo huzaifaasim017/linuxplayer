@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "MpvItem.h"
+#include "DesktopIntegration.h"
 #include "WindowOperations.h"
 
 #include <QGuiApplication>
@@ -27,8 +28,10 @@ int main(int argc, char *argv[])
 
     qmlRegisterType<MpvItem>("LinuxPlayer", 1, 0, "MpvItem");
     WindowOperations windowOperations;
+    DesktopIntegration desktopIntegration;
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty(QStringLiteral("windowOperations"), &windowOperations);
+    engine.rootContext()->setContextProperty(QStringLiteral("desktopIntegration"), &desktopIntegration);
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed,
                      &app, [] { QCoreApplication::exit(1); }, Qt::QueuedConnection);
     engine.load(QUrl(QStringLiteral("qrc:/qml/Main.qml")));

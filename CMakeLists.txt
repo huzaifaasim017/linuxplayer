@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(LinuxPlayer VERSION 0.3.0 LANGUAGES CXX)
+project(LinuxPlayer VERSION 0.4.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -20,6 +20,8 @@ set(QML_RESOURCES qml/Main.qml qml/components/IconButton.qml ${QML_ICONS})
 
 qt_add_executable(linuxplayer
     src/main.cpp
+    src/DesktopIntegration.cpp
+    src/DesktopIntegration.h
     src/MpvItem.cpp
     src/MpvItem.h
     src/WindowOperations.h
@@ -36,6 +38,10 @@ include(CTest)
 if(BUILD_TESTING)
     add_test(NAME qml_startup COMMAND linuxplayer --smoke-test)
     set_tests_properties(qml_startup PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    add_executable(desktop_integration_test tests/desktop_integration.cpp src/DesktopIntegration.cpp src/DesktopIntegration.h)
+    target_include_directories(desktop_integration_test PRIVATE src)
+    target_link_libraries(desktop_integration_test PRIVATE Qt6::Core)
+    add_test(NAME desktop_integration COMMAND desktop_integration_test)
 endif()
 
 install(TARGETS linuxplayer RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

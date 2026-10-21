@@ -14,5 +14,3 @@ Harassment, personal attacks, discrimination, sexualized language or imagery, th
 ## Reporting and enforcement
 
 Maintainers may edit or remove harmful comments, close threads, and restrict participation to protect the community. For public repository content, use GitHub's **Report content** action. For a private conduct report, contact the repository owner through the contact method listed on the project's GitHub profile. Maintainers will limit sharing of reports to people needed to address them and aim to acknowledge a report within seven days.
-
-Before publishing the repository, maintainers should provide a reliable private contact method on the GitHub profile and review this section.

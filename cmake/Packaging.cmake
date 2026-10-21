@@ -17,7 +17,7 @@ else()
     set(LINUXPLAYER_SVG_DEPENDENCY "qt6-svg-plugins | libqt6svg6")
 endif()
 set(CPACK_DEBIAN_PACKAGE_DEPENDS
-    "libmpv2, qml6-module-qtqml, qml6-module-qtqml-workerscript, qml6-module-qtquick, qml6-module-qtquick-window, qml6-module-qtquick-controls, qml6-module-qtquick-templates, qml6-module-qtquick-dialogs, qml6-module-qtquick-layouts, ${LINUXPLAYER_SVG_DEPENDENCY}")
+    "libmpv2, xdg-utils, qml6-module-qtqml, qml6-module-qtqml-workerscript, qml6-module-qtquick, qml6-module-qtquick-window, qml6-module-qtquick-controls, qml6-module-qtquick-templates, qml6-module-qtquick-dialogs, qml6-module-qtquick-layouts, ${LINUXPLAYER_SVG_DEPENDENCY}")
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
 set(CPACK_PACKAGING_INSTALL_PREFIX "/usr")
