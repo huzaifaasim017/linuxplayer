@@ -10,7 +10,7 @@ The [first-release brief](PRODUCT.md) describes current scope. Keep additions fo
 
 ## Build and test
 
-Follow the [build instructions](README.md#build-on-ubuntu-or-debian). For a code change:
+Follow the [build instructions](README.md#build-from-source-on-ubuntu-or-debian). For a code change:
 
 For a quick QML startup check, run `ctest --test-dir build --output-on-failure`. To capture the empty state for visual review, run `QT_QPA_PLATFORM=offscreen ./build/linuxplayer --capture-ui /tmp/linuxplayer-ui.png`.
 
@@ -18,6 +18,7 @@ For a quick QML startup check, run `ctest --test-dir build --output-on-failure`.
 2. Keep playback engine calls in the C++ playback layer; expose UI state and actions to QML through its public interface.
 3. Run a fresh CMake build and any available tests.
 4. Manually try the changed behavior with a local file, including keyboard navigation if the UI changed.
+   For control changes, check the visible dock, automatic fade, explicit hide/show, fullscreen, and a narrow window. See the [interface guide](docs/INTERFACE.md).
 5. Include the commands you ran and their results in the pull request.
 
 If a problem occurs only under Wayland, X11, GNOME, KDE, or a particular GPU, say so. A short reproducible sample is more useful than a large film file.

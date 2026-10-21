@@ -31,6 +31,10 @@ local file / file manager / command line
 
 The UI must treat `MpvItem` as its playback boundary. When adding a new libmpv feature, expose a concise property or method in C++ first, then bind the QML interface to that API. Keep file-system and playback errors visible to the UI rather than silently swallowing them. Avoid embedding codec behavior or direct mpv calls in QML.
 
+The playback adapter also owns file looping, fit/fill (`panscan`), and screenshot commands. `Main.qml` only changes its properties or calls its methods. The [interface guide](INTERFACE.md) describes overlay states, shortcuts, and icon rendering for UI contributors.
+
+`MpvItem` observes libmpv's `eof-reached` property because `keep-open=yes` pauses on the final frame instead of unloading the file. Its `ended` state lets the primary Play action seek to zero and resume. The adapter also exposes opening and cache buffering states; QML delays the spinner to keep short file opens visually quiet.
+
 Resume positions are stored in the user's Qt settings under a hash of the local file path. `MpvItem` writes periodically, removes a position after playback reaches the end, and emits `resumeSuggested` for the QML prompt. No media filenames are stored in the settings keys.
 
 ## Rendering and desktop integration

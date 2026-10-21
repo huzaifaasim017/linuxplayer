@@ -2,12 +2,6 @@
 
 A modern, focused video player for Linux desktops. LinuxPlayer plays **local files** with a Qt Quick interface and the system's libmpv playback engine. The first target is Ubuntu and other Debian based systems; GNOME is the primary desktop, while the app uses cross-desktop Qt and freedesktop integration.
 
-![LinuxPlayer empty state](docs/screenshots/empty-state.png)
-
-![Playback on Wayland with translucent controls](docs/screenshots/playback-wayland.png)
-
-![Resume choice on Wayland](docs/screenshots/resume-wayland.png)
-
 > **Preview:** LinuxPlayer is still an early MVP. See [PRODUCT.md](PRODUCT.md) for its current scope.
 
 ## Install
@@ -26,14 +20,26 @@ curl -fL https://github.com/huzaifaasim017/linuxplayer/releases/download/v0.1.0/
 
 `apt` installs the required runtime packages automatically. Open **LinuxPlayer** from your app menu or run `linuxplayer`. Remove it with `sudo apt remove linuxplayer`. Other Ubuntu and Debian versions can [build from source](#build-from-source-on-ubuntu-or-debian) while packages for those systems are being tested.
 
+The `v0.1.0` package is the earlier public preview. The interface changes shown below are in the current source and are not yet in that package.
+
+## Interface preview
+
+![Playback on Wayland with translucent controls](docs/screenshots/playback-wayland.png)
+
+![Playback options on Wayland](docs/screenshots/options-wayland.png)
+
+[Clean viewing mode](docs/screenshots/hidden-wayland.png) · [Empty state](docs/screenshots/empty-state.png) · [Resume prompt](docs/screenshots/resume-wayland.png)
+
 ## What the current app does
 
 - Open a local video from the app, command line, or drag and drop.
-- Play or pause, seek, skip, change volume and speed, and use fullscreen.
+- Play or pause, replay a finished video, seek, skip, change volume and speed, and use fullscreen.
 - Choose audio and subtitle tracks and load an external subtitle file.
-- Show a compact overlay that clears the video while watching.
+- Change playback speed, loop a video, switch between fit and fill, and save the current frame as a PNG.
+- Show a compact control dock that fades while watching. Use the eye button or **H** to hide every control; move the pointer or press **H** to bring back the Show controls action.
+- See a subtle loading indicator when a video takes time to open or buffer.
 
-Useful keys: **Ctrl+O** opens a file; **Space/K** pauses; **Left/Right** skip 5 seconds; **J/L** skip 10 seconds; **Up/Down** adjust volume; **M** mutes; **F** toggles fullscreen; **Esc** leaves fullscreen. The app remembers playback position for local files and offers a Resume or Start over choice. A media library is outside this MVP.
+Useful keys: **Ctrl+O** opens a file; **Space/K** pauses; **Left/Right** skip 5 seconds; **J/L** skip 10 seconds; **Up/Down** adjust volume; **M** mutes; **F** toggles fullscreen; **Esc** leaves fullscreen; **H** hides or shows controls; **S** saves a frame; **R** loops the video; **[ / ]** change speed. Double-click the video to toggle fullscreen. The app remembers playback position for local files and offers a Resume or Start over choice. A media library is outside this MVP.
 
 ## Build from source on Ubuntu or Debian
 
@@ -83,6 +89,7 @@ Use `sudo apt remove linuxplayer` to uninstall a `.deb`. Prefer the package rout
 
 - [Product scope](PRODUCT.md)
 - [Architecture](docs/ARCHITECTURE.md)
+- [Interface behavior](docs/INTERFACE.md)
 - [Contributing](CONTRIBUTING.md)
 - [Release checks](docs/RELEASING.md)
 

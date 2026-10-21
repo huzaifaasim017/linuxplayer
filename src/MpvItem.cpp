@@ -115,6 +115,8 @@ MpvItem::MpvItem(QQuickItem *parent) : QQuickFramebufferObject(parent)
     mpv_observe_property(m_mpv, 7, "track-list", MPV_FORMAT_NONE);
     mpv_observe_property(m_mpv, 8, "aid", MPV_FORMAT_NONE);
     mpv_observe_property(m_mpv, 9, "sid", MPV_FORMAT_NONE);
+    mpv_observe_property(m_mpv, 10, "eof-reached", MPV_FORMAT_FLAG);
+    mpv_observe_property(m_mpv, 11, "paused-for-cache", MPV_FORMAT_FLAG);
     mpv_set_wakeup_callback(m_mpv, wakeup, this);
     connect(this, &MpvItem::frameReady, this, &MpvItem::update, Qt::QueuedConnection);
     m_saveTimer.setInterval(5000);
@@ -162,6 +164,14 @@ void MpvItem::processEvents()
             if (!property->data) {
                 if (event->reply_userdata == 7) refreshTracks();
                 if (event->reply_userdata == 8 || event->reply_userdata == 9) refreshTrackSelection();
+                if (event->reply_userdata == 10 && m_ended) {
+                    m_ended = false;
+                    emit endedChanged();
+                }
+                if (event->reply_userdata == 11 && m_buffering) {
+                    m_buffering = false;
+                    emit bufferingChanged();
+                }
                 continue;
             }
             switch (event->reply_userdata) {
@@ -178,6 +188,26 @@ void MpvItem::processEvents()
             }
             case 7: refreshTracks(); break;
             case 8: case 9: refreshTrackSelection(); break;
+            case 10: {
+                const bool ended = *static_cast<int *>(property->data) != 0;
+                if (m_ended != ended) {
+                    if (ended) {
+                        QSettings().remove(resumeKey());
+                        m_loaded = false;
+                    }
+                    m_ended = ended;
+                    emit endedChanged();
+                }
+                break;
+            }
+            case 11: {
+                const bool buffering = *static_cast<int *>(property->data) != 0;
+                if (m_buffering != buffering) {
+                    m_buffering = buffering;
+                    emit bufferingChanged();
+                }
+                break;
+            }
             default: break;
             }
         } else if (event->event_id == MPV_EVENT_END_FILE) {
@@ -186,15 +216,31 @@ void MpvItem::processEvents()
                 QSettings settings;
                 settings.remove(resumeKey());
                 m_loaded = false;
+                if (!m_ended) {
+                    m_ended = true;
+                    emit endedChanged();
+                }
             }
             if (end->reason == MPV_END_FILE_REASON_ERROR) {
                 m_loaded = false;
+                if (m_loading) {
+                    m_loading = false;
+                    emit loadingChanged();
+                }
                 m_sourceUrl = QUrl();
                 emit sourceUrlChanged();
                 emit errorOccurred(QString::fromUtf8(mpv_error_string(end->error)));
             }
         } else if (event->event_id == MPV_EVENT_FILE_LOADED) {
             m_loaded = true;
+            if (m_loading) {
+                m_loading = false;
+                emit loadingChanged();
+            }
+            if (m_ended) {
+                m_ended = false;
+                emit endedChanged();
+            }
             double fileDuration = 0;
             mpv_get_property(m_mpv, "duration", MPV_FORMAT_DOUBLE, &fileDuration);
             const double saved = QSettings().value(resumeKey(), 0).toDouble();
@@ -257,6 +303,10 @@ void MpvItem::openFile(const QUrl &url)
         emit errorOccurred(QStringLiteral("Choose a video file from your computer."));
         return;
     }
+    if (!m_loading) {
+        m_loading = true;
+        emit loadingChanged();
+    }
     // mpv requires its render context before the first loadfile command.
     if (!m_renderReady.load()) {
         m_pendingUrl = url;
@@ -267,6 +317,10 @@ void MpvItem::openFile(const QUrl &url)
     }
     savePosition();
     m_loaded = false;
+    if (m_ended) {
+        m_ended = false;
+        emit endedChanged();
+    }
     m_currentPath = url.toLocalFile();
     m_duration = 0;
     m_position = 0;
@@ -276,6 +330,8 @@ void MpvItem::openFile(const QUrl &url)
     const char *args[] = {"loadfile", path.constData(), "replace", nullptr};
     const int result = mpv_command(m_mpv, args);
     if (result < 0) {
+        m_loading = false;
+        emit loadingChanged();
         m_sourceUrl = QUrl();
         emit sourceUrlChanged();
         emit errorOccurred(QString::fromUtf8(mpv_error_string(result)));
@@ -318,11 +374,20 @@ void MpvItem::seek(double seconds)
         return;
     const QByteArray value = QByteArray::number(seconds, 'f', 3);
     const char *args[] = {"seek", value.constData(), "absolute", nullptr};
-    mpv_command(m_mpv, args);
+    if (mpv_command(m_mpv, args) >= 0 && m_ended) {
+        m_ended = false;
+        m_loaded = true;
+        emit endedChanged();
+    }
 }
 
 void MpvItem::togglePause()
 {
+    if (m_ended) {
+        seek(0);
+        setPaused(false);
+        return;
+    }
     setPaused(!m_paused);
 }
 
@@ -334,6 +399,19 @@ void MpvItem::loadSubtitle(const QUrl &url)
     }
     const QByteArray path = url.toLocalFile().toUtf8();
     const char *args[] = {"sub-add", path.constData(), "select", nullptr};
+    const int result = mpv_command(m_mpv, args);
+    if (result < 0)
+        emit errorOccurred(QString::fromUtf8(mpv_error_string(result)));
+}
+
+void MpvItem::saveScreenshot(const QUrl &url)
+{
+    if (!url.isLocalFile() || m_sourceUrl.isEmpty()) {
+        emit errorOccurred(QStringLiteral("Open a video and choose a local screenshot path."));
+        return;
+    }
+    const QByteArray path = url.toLocalFile().toUtf8();
+    const char *args[] = {"screenshot-to-file", path.constData(), "video", nullptr};
     const int result = mpv_command(m_mpv, args);
     if (result < 0)
         emit errorOccurred(QString::fromUtf8(mpv_error_string(result)));
@@ -373,4 +451,27 @@ void MpvItem::setSubtitleTrackId(int id)
     }
     int64_t value = id;
     mpv_set_property(m_mpv, "sid", MPV_FORMAT_INT64, &value);
+}
+
+void MpvItem::setLooping(bool looping)
+{
+    if (m_looping == looping) return;
+    if (mpv_set_property_string(m_mpv, "loop-file", looping ? "inf" : "no") < 0) {
+        emit errorOccurred(QStringLiteral("Could not change loop mode."));
+        return;
+    }
+    m_looping = looping;
+    emit loopingChanged();
+}
+
+void MpvItem::setVideoFill(bool fill)
+{
+    if (m_videoFill == fill) return;
+    double panscan = fill ? 1.0 : 0.0;
+    if (mpv_set_property(m_mpv, "panscan", MPV_FORMAT_DOUBLE, &panscan) < 0) {
+        emit errorOccurred(QStringLiteral("Could not change video fit."));
+        return;
+    }
+    m_videoFill = fill;
+    emit videoFillChanged();
 }
