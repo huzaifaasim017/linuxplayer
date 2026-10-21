@@ -12,14 +12,14 @@ jobs:
       - name: Install build and validation tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake pkg-config qt6-base-dev qt6-declarative-dev libmpv-dev libgl1-mesa-dev libqt6svg6 desktop-file-utils appstream
+          sudo apt-get install -y build-essential cmake pkg-config qt6-base-dev qt6-declarative-dev libmpv-dev libgl1-mesa-dev libqt6svg6 desktop-file-utils appstream qml6-module-qtquick qml6-module-qtquick-window qml6-module-qtquick-controls qml6-module-qtquick-dialogs qml6-module-qtquick-layouts qml6-module-qtqml-workerscript
       - name: Validate desktop metadata
         run: |
           desktop-file-validate assets/io.github.teamkrope.LinuxPlayer.desktop
           appstreamcli validate --no-net assets/io.github.teamkrope.LinuxPlayer.metainfo.xml
       - name: Configure and build
         run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DLINUXPLAYER_UBUNTU_VERSION=24.04
           cmake --build build --parallel
           ctest --test-dir build --output-on-failure
       - name: Build and inspect Debian package
@@ -30,4 +30,5 @@ jobs:
           dpkg-deb -c linuxplayer_*.deb
           dpkg-deb -f linuxplayer_*.deb Depends | grep -F 'qml6-module-qtquick-controls'
           dpkg-deb -f linuxplayer_*.deb Depends | grep -F 'libmpv2'
-          dpkg-deb -f linuxplayer_*.deb Depends | grep -F 'qt6-svg-plugins | libqt6svg6'
+          dpkg-deb -f linuxplayer_*.deb Depends | grep -F 'libqt6svg6'
+          dpkg-deb -f linuxplayer_*.deb Depends | grep -F 'qml6-module-qtqml-workerscript'

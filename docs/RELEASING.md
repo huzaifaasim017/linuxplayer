@@ -14,7 +14,7 @@ This checklist is for a tagged source release and a Debian package built on a su
 ## 2. Build from a clean checkout
 
 ```bash
-cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release
+cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release -DLINUXPLAYER_UBUNTU_VERSION="$(. /etc/os-release; echo "$VERSION_ID")"
 cmake --build build-release --parallel
 ctest --test-dir build-release --output-on-failure
 cd build-release

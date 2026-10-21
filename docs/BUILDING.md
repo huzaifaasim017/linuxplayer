@@ -6,13 +6,21 @@ On Ubuntu or Debian, install the build tools:
 
 ```bash
 sudo apt update
-sudo apt install build-essential cmake pkg-config qt6-base-dev qt6-declarative-dev libmpv-dev libgl1-mesa-dev libqt6svg6
+sudo apt install build-essential cmake pkg-config qt6-base-dev qt6-declarative-dev libmpv-dev libgl1-mesa-dev libqt6svg6 \
+  qml6-module-qtquick qml6-module-qtquick-window qml6-module-qtquick-controls \
+  qml6-module-qtquick-dialogs qml6-module-qtquick-layouts qml6-module-qtqml-workerscript
+```
+
+On Ubuntu 26.04, add the SVG image plugin for the interface icons:
+
+```bash
+sudo apt install qt6-svg-plugins
 ```
 
 Build and run:
 
 ```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DLINUXPLAYER_UBUNTU_VERSION="$(. /etc/os-release; echo "$VERSION_ID")"
 cmake --build build --parallel
 ctest --test-dir build --output-on-failure
 ./build/linuxplayer
