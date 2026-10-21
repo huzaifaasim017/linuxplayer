@@ -1,6 +1,6 @@
 # Build LinuxPlayer from source
 
-The packaged release supports Ubuntu 24.04 LTS and 26.04 LTS on amd64. Contributors and users on other systems can build from source when their distribution supplies Qt 6.4 or newer and libmpv development packages.
+The installer tries the available amd64 Debian packages and uses `apt` to check which one fits the libraries on your system. Release builds are tested on Ubuntu 24.04 LTS and 26.04 LTS. Other Ubuntu and Debian-based versions may work when they provide compatible dependencies; they are not covered by the release tests. Contributors and users on other systems can build from source when their distribution supplies Qt 6.4 or newer and libmpv development packages.
 
 On Ubuntu or Debian, install the build tools:
 

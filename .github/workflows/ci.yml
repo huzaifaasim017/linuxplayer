@@ -17,6 +17,8 @@ jobs:
         run: |
           desktop-file-validate assets/io.github.teamkrope.LinuxPlayer.desktop
           appstreamcli validate --no-net assets/io.github.teamkrope.LinuxPlayer.metainfo.xml
+      - name: Test installer selection
+        run: bash tests/installer.sh
       - name: Configure and build
         run: |
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DLINUXPLAYER_UBUNTU_VERSION=24.04

@@ -2,45 +2,49 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 set -euo pipefail
 
-if [[ ! -r /etc/os-release ]]; then
-    echo "Cannot detect this Linux distribution." >&2
-    exit 1
-fi
-. /etc/os-release
-
-if [[ "${ID:-}" != "ubuntu" ]]; then
-    echo "LinuxPlayer packages currently support Ubuntu 24.04 and 26.04. See the GitHub README for source builds." >&2
-    exit 1
-fi
-
-case "${VERSION_ID:-}" in
-    24.04|26.04) ;;
-    *) echo "No tested package for Ubuntu ${VERSION_ID:-unknown}. See the GitHub README for source builds." >&2; exit 1 ;;
-esac
-
-if [[ "$(dpkg --print-architecture)" != "amd64" ]]; then
-    echo "LinuxPlayer packages currently support amd64 computers." >&2
-    exit 1
-fi
-
-for tool in curl sha256sum apt; do
+for tool in curl sha256sum dpkg apt-get; do
     if ! command -v "$tool" >/dev/null 2>&1; then
-        echo "Required command not found: $tool" >&2
+        echo "LinuxPlayer needs a Debian-based system with $tool installed." >&2
         exit 1
     fi
 done
 
-asset="linuxplayer_ubuntu${VERSION_ID}_amd64.deb"
+architecture="$(dpkg --print-architecture)"
+if [[ "$architecture" != amd64 ]]; then
+    echo "There is no LinuxPlayer release package for $architecture yet." >&2
+    exit 1
+fi
+
 release_url="https://github.com/huzaifaasim017/linuxplayer/releases/latest/download"
 download_dir="$(mktemp -d)"
 trap 'rm -rf "$download_dir"' EXIT
 
-curl -fL --retry 3 "$release_url/$asset" -o "$download_dir/$asset"
-curl -fL --retry 3 "$release_url/$asset.sha256" -o "$download_dir/$asset.sha256"
-(cd "$download_dir" && sha256sum -c "$asset.sha256")
+# Try the newest build first. apt's dependency solver decides which package
+# works on this system; distribution names and version numbers are not gates.
+for build in 26.04 24.04; do
+    asset="linuxplayer_ubuntu${build}_${architecture}.deb"
+    package="$download_dir/$asset"
+    if ! curl -fsSL --retry 3 "$release_url/$asset" -o "$package" ||
+       ! curl -fsSL --retry 3 "$release_url/$asset.sha256" -o "$package.sha256"; then
+        echo "Could not download the latest LinuxPlayer release." >&2
+        exit 1
+    fi
+    if ! (cd "$download_dir" && sha256sum --check --status "$asset.sha256"); then
+        echo "Checksum verification failed for $asset; installation stopped." >&2
+        exit 1
+    fi
 
-if [[ "${EUID:-$(id -u)}" -eq 0 ]]; then
-    apt install "$download_dir/$asset"
-else
-    sudo apt install "$download_dir/$asset"
-fi
+    if apt-get -s --no-remove install "$package" >"$download_dir/apt-check.log" 2>&1; then
+        echo "Installing LinuxPlayer..."
+        if [[ "${EUID:-$(id -u)}" -eq 0 ]]; then
+            apt-get --no-remove install "$package"
+        else
+            sudo apt-get --no-remove install "$package"
+        fi
+        exit 0
+    fi
+done
+
+echo "No current LinuxPlayer package fits this system's available dependencies." >&2
+echo "See https://github.com/huzaifaasim017/linuxplayer/blob/main/docs/BUILDING.md for other systems." >&2
+exit 1

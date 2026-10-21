@@ -1,18 +1,20 @@
 # LinuxPlayer
 
-A clean, modern player for videos on your Ubuntu desktop.
+A clean, modern video player for Linux.
 
 ## Install
 
-For **Ubuntu 24.04 LTS or 26.04 LTS (amd64)**, run:
+On Ubuntu or another Debian-based Linux system (64-bit), run:
 
 ```bash
-curl -fsSLo /tmp/linuxplayer-install.sh https://github.com/huzaifaasim017/linuxplayer/releases/latest/download/install.sh && bash /tmp/linuxplayer-install.sh
+curl -fsSLo /tmp/linuxplayer-install.sh \
+  https://github.com/huzaifaasim017/linuxplayer/releases/latest/download/install.sh
+bash /tmp/linuxplayer-install.sh
 ```
 
-The [installer script](scripts/install.sh) downloads the package for your Ubuntu version, checks its SHA-256 checksum, and installs it with `apt`. Open **LinuxPlayer** from the app menu or run `linuxplayer`. To remove it, run `sudo apt remove linuxplayer`.
+The [installer](scripts/install.sh) checks which release package fits your system, verifies its checksum, and installs it with `apt`. Open **LinuxPlayer** from the app menu or run `linuxplayer`. To remove it, run `sudo apt remove linuxplayer`.
 
-Prefer a manual install? Download the `.deb` for your Ubuntu version from the [latest release](https://github.com/huzaifaasim017/linuxplayer/releases/latest), then run `sudo apt install ./filename.deb` in the download folder.
+Prefer a manual install? Download a `.deb` from the [latest release](https://github.com/huzaifaasim017/linuxplayer/releases/latest), then run `sudo apt install ./filename.deb` in the download folder. See [compatibility and source builds](docs/BUILDING.md) if your system's packages differ.
 
 ## Use
 
