@@ -1,4 +1,4 @@
-name: Release Ubuntu package
+name: Release Ubuntu packages
 
 on:
   push:
@@ -9,8 +9,12 @@ permissions:
   contents: write
 
 jobs:
-  ubuntu-2604-amd64:
-    runs-on: ubuntu-26.04
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        ubuntu: ['24.04', '26.04']
+    runs-on: ubuntu-${{ matrix.ubuntu }}
     steps:
       - uses: actions/checkout@v4
 
@@ -30,7 +34,8 @@ jobs:
           cmake --build build-release --parallel
           ctest --test-dir build-release --output-on-failure
 
-      - name: Package and check installation dependencies
+      - name: Package and verify installation
+        shell: bash
         run: |
           set -euo pipefail
           (cd build-release && cpack -G DEB)
@@ -40,18 +45,35 @@ jobs:
           architecture=$(dpkg-deb -f "$package" Architecture)
           test "$GITHUB_REF_NAME" = "v$version"
           test "$architecture" = amd64
-          apt-get -s install "./$package"
+          sudo apt-get install -y "./$package"
+          QT_QPA_PLATFORM=offscreen linuxplayer --smoke-test
           mkdir -p dist
-          asset="linuxplayer_${version}_ubuntu26.04_${architecture}.deb"
+          asset="linuxplayer_ubuntu${{ matrix.ubuntu }}_${architecture}.deb"
           cp "$package" "dist/$asset"
           (cd dist && sha256sum "$asset" > "$asset.sha256")
 
-      - name: Publish preview release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ubuntu-${{ matrix.ubuntu }}-amd64
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ubuntu-*-amd64
+          path: dist/
+          merge-multiple: true
+      - name: Publish latest release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" dist/*.deb dist/*.sha256 \
+          gh release create "$GITHUB_REF_NAME" dist/*.deb dist/*.sha256 scripts/install.sh \
             --verify-tag \
-            --prerelease \
-            --title "LinuxPlayer ${GITHUB_REF_NAME#v} preview" \
+            --latest \
+            --title "LinuxPlayer ${GITHUB_REF_NAME#v}" \
             --notes-file "docs/releases/$GITHUB_REF_NAME.md"

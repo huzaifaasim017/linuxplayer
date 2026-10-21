@@ -10,7 +10,7 @@ The [first-release brief](PRODUCT.md) describes current scope. Keep additions fo
 
 ## Build and test
 
-Follow the [build instructions](README.md#build-from-source-on-ubuntu-or-debian). For a code change:
+Follow the [build instructions](docs/BUILDING.md). For a code change:
 
 For a quick QML startup check, run `ctest --test-dir build --output-on-failure`. To capture the empty state for visual review, run `QT_QPA_PLATFORM=offscreen ./build/linuxplayer --capture-ui /tmp/linuxplayer-ui.png`.
 
