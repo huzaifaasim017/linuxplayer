@@ -82,6 +82,12 @@ ApplicationWindow {
         }
     }
 
+    // Used by the release screenshot command, which captures the real QML UI.
+    function openOptionsForCapture() {
+        revealControls()
+        settingsPopup.open()
+    }
+
     function toggleMiniPlayer() {
         if (!hasMedia) return
         trackPopup.close()

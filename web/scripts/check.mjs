@@ -11,7 +11,7 @@ for (const text of ['LinuxPlayer', 'id="download"', 'id="features"', 'id="previe
 for (const asset of ['linuxplayer_amd64.deb', 'linuxplayer_arm64.deb']) {
   if (!download.includes(`/releases/latest/download/${asset}`)) throw new Error(`Missing latest direct download: ${asset}`);
 }
-for (const file of ['styles.css', 'script.js', 'download.js', 'robots.txt', 'LICENSE', 'assets/linuxplayer-bird.png', 'assets/ratio-source.webp', 'assets/screenshots/playback-wayland.png', 'assets/screenshots/options-wayland.png', 'assets/screenshots/mini-player-wayland.png']) {
+for (const file of ['styles.css', 'script.js', 'download.js', 'robots.txt', 'LICENSE', 'assets/linuxplayer-bird.png', 'assets/ratio-source.webp', 'assets/screenshots/playback-wayland.png', 'assets/screenshots/options-wayland.png', 'assets/screenshots/hidden-wayland.png', 'assets/screenshots/mini-player-wayland.png']) {
   if (!(await stat(path.join(root, file))).isFile()) throw new Error(`Missing asset: ${file}`);
 }
 console.log('Site content and required assets verified.');

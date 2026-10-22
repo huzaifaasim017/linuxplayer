@@ -6,15 +6,15 @@ A local video player for Ubuntu and other Debian based desktops. It opens a file
 
 This is a desktop application, not a website or browser extension. Video decoding should use an established playback engine rather than a custom codec stack.
 
-## First release promise
+## v1 release promise
 
 Open a local video and watch it comfortably on Ubuntu. The first release should work well on both Wayland and X11, with mouse and keyboard.
 
 ## Current experience
 
-The player includes playback controls, resume, a compact mini-player, delayed loading feedback, and replay after a video ends. Controls fade as soon as playback starts; brief animations acknowledge clicks, skips, seeking, volume, and fullscreen. Users can choose a centered canvas preview ratio for common social layouts or a custom width:height ratio. This preview does not create a new video file. An explicit action sets LinuxPlayer as the default handler for supported video MIME types and disappears while those associations remain selected. The empty state keeps **Open video** primary. The website's bird mark and navy/teal identity carry into the app, with an optional system accent setting.
+The player includes playback controls, resume, a compact mini-player, delayed loading feedback, and replay after a video ends. Controls fade as soon as playback starts; the lock action clears the entire canvas, with a temporary unlock button on pointer movement or **H**. Brief animations acknowledge clicks, skips, seeking, volume, and fullscreen. Users can choose a centered canvas preview ratio for common social layouts or a custom width:height ratio. This preview does not create a new video file. An explicit action sets LinuxPlayer as the default handler for supported video MIME types and disappears while those associations remain selected. The empty state keeps **Open video** primary. The bird mark sits on a white rounded launcher icon so it reads in light and dark desktop themes. The navy/teal identity carries into the app, with an optional system accent setting.
 
-## First release scope
+## v1 scope
 
 - Open a file from the app, file manager, command line, or drag and drop.
 - Play and pause; seek with a clear timeline; skip backward or forward; change volume and mute.

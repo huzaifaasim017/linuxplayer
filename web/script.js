@@ -17,9 +17,9 @@
   });
 
   const shots = {
-    playback: { file: 'playback-wayland.png', title: 'Playback', description: 'Timeline and controls over the video.', alt: 'LinuxPlayer playback interface' },
-    options: { file: 'options-wayland.png', title: 'Controls', description: 'More options in the actual player.', alt: 'LinuxPlayer More options popup' },
-    resume: { file: 'resume-wayland.png', title: 'Resume', description: 'Continue a local video where you stopped.', alt: 'LinuxPlayer resume dialog' },
+    playback: { file: 'playback-wayland.png', title: 'Playback', description: 'Clean controls over the video.', alt: 'LinuxPlayer playback interface with lock control' },
+    options: { file: 'options-wayland.png', title: 'Controls', description: 'Playback settings and quick actions.', alt: 'LinuxPlayer playback options popup' },
+    hidden: { file: 'hidden-wayland.png', title: 'Video only', description: 'Every control clears the canvas.', alt: 'LinuxPlayer video canvas with controls locked and hidden' },
     mini: { file: 'mini-player-wayland.png', title: 'Mini-player', description: 'Actual mini-player window over an illustrative workspace.', alt: 'LinuxPlayer compact mini-player shown over an illustrative workspace' }
   };
   const tabs = [...document.querySelectorAll('.gallery-tabs [role="tab"]')];

@@ -10,6 +10,7 @@ This checklist is for a tagged source release and a Debian package built on a su
 - Verify that the project's GitHub profile has a working private Code of Conduct contact method.
 - Check that the AppStream homepage in `assets/io.github.teamkrope.LinuxPlayer.metainfo.xml` points to the published repository.
 - Confirm the CPack maintainer address is `contact@teamkrope.com`.
+- If the logo changes, run `scripts/build-icon.sh` with FFmpeg installed. It composes the unchanged source artwork on a white rounded square and writes the same icon to the desktop and website.
 
 ## 2. Build from a clean checkout
 

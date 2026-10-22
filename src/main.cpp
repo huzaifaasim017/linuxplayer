@@ -48,9 +48,11 @@ int main(int argc, char *argv[])
     const bool captureRestored = arguments.contains(QStringLiteral("--capture-restored"));
     const bool captureMini = captureRestored || arguments.contains(QStringLiteral("--capture-mini"));
     const bool captureHidden = arguments.contains(QStringLiteral("--capture-hidden"));
+    const bool captureOptions = arguments.contains(QStringLiteral("--capture-options"));
     const int captureIndex = arguments.indexOf(captureRestored ? QStringLiteral("--capture-restored")
                                                        : captureMini ? QStringLiteral("--capture-mini")
                                                        : captureHidden ? QStringLiteral("--capture-hidden")
+                                                       : captureOptions ? QStringLiteral("--capture-options")
                                                                      : QStringLiteral("--capture-ui"));
     if (captureIndex >= 0 && captureIndex + 1 < arguments.size()) {
         const QString path = arguments.at(captureIndex + 1);
@@ -73,6 +75,15 @@ int main(int argc, char *argv[])
         if (captureHidden) {
             QTimer::singleShot(1300, &app, [root = engine.rootObjects().first()] {
                 QMetaObject::invokeMethod(root, "toggleTools");
+            });
+        }
+        if (captureOptions) {
+            QTimer::singleShot(1500, &app, [root = engine.rootObjects().first()] {
+                QMetaObject::invokeMethod(root, "openOptionsForCapture");
+            });
+        } else if (!captureMini && !captureHidden) {
+            QTimer::singleShot(1500, &app, [root = engine.rootObjects().first()] {
+                QMetaObject::invokeMethod(root, "revealControls");
             });
         }
         QTimer::singleShot(captureRestored ? 4200 : captureMini ? 3500 : 2100,

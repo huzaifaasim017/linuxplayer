@@ -5,7 +5,7 @@ A two-page website for [LinuxPlayer](https://github.com/teamkrope/linuxplayer). 
 ## Preview locally
 
 ```bash
-cd LinuxPlayerWeb
+cd web
 npm run build
 npm run check
 npm run serve
@@ -23,8 +23,8 @@ SITE_URL=https://teamkrope.github.io/linuxplayer/ npm run build
 
 `dist/` contains the deployable static site, canonical URLs for both pages, Open Graph/Twitter image URLs, `robots.txt`, and a two-page `sitemap.xml`. The [Website workflow](../.github/workflows/pages.yml) builds and deploys this directory on changes to `web/` on `main`. Set GitHub Pages source to **GitHub Actions** in repository settings. For another host or domain, update `SITE_URL` in the workflow first. Do not publish a build created without `SITE_URL`; it deliberately disallows crawling.
 
-The main download uses GitHub's stable latest-release URL for `linuxplayer_amd64.deb`; ARM64 is available as an optional link and through the installer. The release workflow publishes one package per CPU architecture, built on Ubuntu 24.04 and install-tested on Ubuntu 26.04. The installer link uses the latest `install.sh`, which detects architecture and checks the package checksum. Release labels request GitHub's API at runtime and fall back to “Latest” if it is unavailable. Update product copy and screenshots when features change; screenshot source files live in `../LinuxPlayer/docs/screenshots/`.
+The main download uses GitHub's stable latest-release URL for `linuxplayer_amd64.deb`; ARM64 is available as an optional link and through the installer. The release workflow publishes one package per CPU architecture, built on Ubuntu 24.04 and install-tested on Ubuntu 26.04. The installer link uses the latest `install.sh`, which detects architecture and checks the package checksum. Release labels request GitHub's API at runtime and fall back to “Latest” if it is unavailable. Update product copy and screenshots when features change; screenshot source files live in `../docs/screenshots/`.
 
 ## Content and attribution
 
-All product behavior is based on the LinuxPlayer repository. Screenshot links in the gallery point to their original source files. The PiP desktop arrangement is illustrative; the mini-player inside it is an actual app capture. `assets/ratio-source.webp` is an AI-generated illustration used only to demonstrate Fit and Fill. `assets/linuxplayer-bird.png` is the final logo shared with the desktop application. The website uses no analytics, trackers, external font service, or cookie storage. The website is distributed under [GPL-3.0-or-later](LICENSE), matching LinuxPlayer's [application license](https://github.com/teamkrope/linuxplayer/blob/main/LICENSE).
+All product behavior is based on the LinuxPlayer repository. Screenshot links in the gallery point to their original source files. The PiP desktop arrangement is illustrative; the mini-player inside it is an actual app capture. `assets/ratio-source.webp` is an AI-generated illustration used only to demonstrate Fit and Fill. `assets/linuxplayer-bird.png` is the rounded app icon shared with the desktop application, generated from `../assets/linuxplayer-bird-source.png` by `../scripts/build-icon.sh`. The website uses no analytics, trackers, external font service, or cookie storage. The website is distributed under [GPL-3.0-or-later](LICENSE), matching LinuxPlayer's [application license](https://github.com/teamkrope/linuxplayer/blob/main/LICENSE).

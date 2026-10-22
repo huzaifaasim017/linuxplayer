@@ -29,7 +29,7 @@ local file / file manager / command line
 | `qml/Main.qml` | Window layout, file actions, control overlay, settings menus, shortcuts, and focus behavior. |
 | `qml/components/` | Reusable interface components. |
 | `qml/icons/` | Interface icon assets. |
-| `assets/` | Installed launcher, application icon, and AppStream metadata. |
+| `assets/` | Installed launcher, rounded application icon, original logo artwork, and AppStream metadata. |
 | `cmake/Packaging.cmake` | CPack settings for Debian packages. |
 
 The UI must treat `MpvItem` as its playback boundary. When adding a new libmpv feature, expose a concise property or method in C++ first, then bind the QML interface to that API. Keep file-system and playback errors visible to the UI rather than silently swallowing them. Avoid embedding codec behavior or direct mpv calls in QML.
