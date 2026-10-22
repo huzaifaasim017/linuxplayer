@@ -17,10 +17,11 @@
   });
 
   const shots = {
-    playback: { file: 'playback-wayland.png', title: 'Playback', description: 'Clean controls over the video.', alt: 'LinuxPlayer playback interface with lock control' },
-    options: { file: 'options-wayland.png', title: 'Controls', description: 'Playback settings and quick actions.', alt: 'LinuxPlayer playback options popup' },
-    hidden: { file: 'hidden-wayland.png', title: 'Video only', description: 'Every control clears the canvas.', alt: 'LinuxPlayer video canvas with controls locked and hidden' },
-    mini: { file: 'mini-player-wayland.png', title: 'Mini-player', description: 'Actual mini-player window over an illustrative workspace.', alt: 'LinuxPlayer compact mini-player shown over an illustrative workspace' }
+    playback: { file: 'playback-v1.png', title: 'Playback', description: 'Clean controls over the video.', alt: 'LinuxPlayer playback interface with lock control' },
+    options: { file: 'options-v1.png', title: 'Controls', description: 'Playback settings and quick actions.', alt: 'LinuxPlayer playback options popup' },
+    hidden: { file: 'hidden-v1.png', title: 'Video only', description: 'Every control clears the canvas.', alt: 'LinuxPlayer video canvas with controls locked and hidden' },
+    mini: { file: 'mini-player-v1.png', title: 'Mini-player', description: 'Actual mini-player window over an illustrative workspace.', alt: 'LinuxPlayer compact mini-player shown over an illustrative workspace' },
+    start: { file: 'empty-v1.png', title: 'Start screen', description: 'Open a video without a setup wall.', alt: 'LinuxPlayer start screen with rounded app icon and Open video button' }
   };
   const tabs = [...document.querySelectorAll('.gallery-tabs [role="tab"]')];
   const galleryImage = document.querySelector('#gallery-image');

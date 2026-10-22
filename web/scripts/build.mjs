@@ -27,7 +27,7 @@ for (const page of ['index.html', 'download.html']) {
   let html = await readFile(path.join(root, page), 'utf8');
   if (siteUrl) {
     const pageUrl = page === 'index.html' ? siteUrl : new URL(page, siteUrl).href;
-    const imageUrl = new URL('assets/screenshots/playback-wayland.png', siteUrl).href;
+    const imageUrl = new URL('assets/screenshots/playback-v1.png', siteUrl).href;
     html = html.replace('<!-- SEO_URLS -->', [
       `<link rel="canonical" href="${pageUrl}">`,
       `<meta property="og:url" content="${pageUrl}">`,

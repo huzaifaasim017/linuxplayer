@@ -25,6 +25,10 @@ SITE_URL=https://teamkrope.github.io/linuxplayer/ npm run build
 
 The main download uses GitHub's stable latest-release URL for `linuxplayer_amd64.deb`; ARM64 is available as an optional link and through the installer. The release workflow publishes one package per CPU architecture, built on Ubuntu 24.04 and install-tested on Ubuntu 26.04. The installer link uses the latest `install.sh`, which detects architecture and checks the package checksum. Release labels request GitHub's API at runtime and fall back to “Latest” if it is unavailable. Update product copy and screenshots when features change; screenshot source files live in `../docs/screenshots/`.
 
+## Refresh the screenshots
+
+Install the current build, open a graphical desktop session, and run `scripts/capture-screenshots.sh` from the repository root. The script creates a procedural sample video with FFmpeg and uses LinuxPlayer's built-in capture commands to write the real playback, options, locked, mini-player, and start-screen views to both `docs/screenshots/` and `web/assets/screenshots/`. Review each capture before publishing. These assets are versioned as `*-v1.png` so a new interface version can use new filenames without stale browser caches.
+
 ## Content and attribution
 
 All product behavior is based on the LinuxPlayer repository. Screenshot links in the gallery point to their original source files. The PiP desktop arrangement is illustrative; the mini-player inside it is an actual app capture. `assets/ratio-source.webp` is an AI-generated illustration used only to demonstrate Fit and Fill. `assets/linuxplayer-bird.png` is the rounded app icon shared with the desktop application, generated from `../assets/linuxplayer-bird-source.png` by `../scripts/build-icon.sh`. The website uses no analytics, trackers, external font service, or cookie storage. The website is distributed under [GPL-3.0-or-later](LICENSE), matching LinuxPlayer's [application license](https://github.com/teamkrope/linuxplayer/blob/main/LICENSE).

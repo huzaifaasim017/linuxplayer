@@ -24,7 +24,7 @@ See [compatibility and source builds](docs/BUILDING.md) if your system's package
 
 ## Use
 
-![LinuxPlayer playing a video](docs/screenshots/playback-wayland.png)
+![LinuxPlayer playing a video](docs/screenshots/playback-v1.png)
 
 Open a video with **Open video**, drag a file into the window, or open it from your file manager. The player has seeking, speed, audio and subtitle tracks, resume, fullscreen, and a compact mini-player. Press **Space** to play or pause, **H** to lock or unlock controls, **I** for the mini-player, and **F1** for all shortcuts. Controls disappear as playback starts. Lock mode keeps the video clear until you move the pointer to reveal the unlock button or press **H**. Number keys jump through the video. A finished video plays again from the start when you press Play.
 
