@@ -19,6 +19,7 @@ await rm(output, { recursive: true, force: true });
 await mkdir(output, { recursive: true });
 await cp(path.join(root, 'assets'), path.join(output, 'assets'), { recursive: true });
 await cp(path.join(root, 'styles.css'), path.join(output, 'styles.css'));
+await cp(path.join(root, 'showcase.css'), path.join(output, 'showcase.css'));
 await cp(path.join(root, 'script.js'), path.join(output, 'script.js'));
 await cp(path.join(root, 'motion.js'), path.join(output, 'motion.js'));
 await cp(path.join(root, 'download.js'), path.join(output, 'download.js'));
