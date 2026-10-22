@@ -82,13 +82,15 @@ jobs:
         run: |
           set -euo pipefail
           (cd dist && sha256sum --check "linuxplayer_${{ matrix.arch }}.deb.sha256")
-          if [ "${{ matrix.arch }}" = amd64 ]; then
-            for source in /etc/apt/apt-mirrors.txt /etc/apt/sources.list.d/ubuntu.sources; do
-              if [ -f "$source" ]; then
+          for source in /etc/apt/apt-mirrors.txt /etc/apt/sources.list.d/ubuntu.sources; do
+            if [ -f "$source" ]; then
+              if [ "${{ matrix.arch }}" = amd64 ]; then
                 sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' "$source"
+              else
+                sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|https://ports.ubuntu.com/ubuntu-ports|g' "$source"
               fi
-            done
-          fi
+            fi
+          done
           sudo apt-get update
           sudo apt-get install -y "./dist/linuxplayer_${{ matrix.arch }}.deb"
           QT_QPA_PLATFORM=offscreen linuxplayer --smoke-test
