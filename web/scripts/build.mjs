@@ -4,7 +4,8 @@ import path from 'node:path';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const output = path.join(root, 'dist');
-const requestedUrl = process.env.SITE_URL?.trim();
+const requestedUrl = process.env.SITE_URL?.trim()
+  || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : null);
 let siteUrl = null;
 
 if (requestedUrl) {
