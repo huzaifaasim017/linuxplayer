@@ -17,11 +17,11 @@
   });
 
   const shots = {
-    playback: { file: 'playback-v1.png', title: 'Playback', description: 'Clean controls over the video.', alt: 'LinuxPlayer playback interface with lock control' },
-    options: { file: 'options-v1.png', title: 'Controls', description: 'Playback settings and quick actions.', alt: 'LinuxPlayer playback options popup' },
-    hidden: { file: 'hidden-v1.png', title: 'Video only', description: 'Every control clears the canvas.', alt: 'LinuxPlayer video canvas with controls locked and hidden' },
-    mini: { file: 'mini-player-v1.png', title: 'Mini-player', description: 'Actual mini-player window over an illustrative workspace.', alt: 'LinuxPlayer compact mini-player shown over an illustrative workspace' },
-    start: { file: 'empty-v1.png', title: 'Start screen', description: 'Open a video without a setup wall.', alt: 'LinuxPlayer start screen with rounded app icon and Open video button' }
+    playback: { file: 'playback-v1-coast.png', title: 'Playback', alt: 'LinuxPlayer playback interface with lock control' },
+    options: { file: 'options-v1-coast.png', title: 'Controls', alt: 'LinuxPlayer playback options popup' },
+    hidden: { file: 'hidden-v1-coast.png', title: 'Video only', alt: 'LinuxPlayer video canvas with controls locked and hidden' },
+    mini: { file: 'mini-player-v1-coast.png', title: 'Mini-player', alt: 'LinuxPlayer compact mini-player shown over an illustrative workspace' },
+    start: { file: 'empty-v1-coast.png', title: 'Start screen', alt: 'LinuxPlayer start screen with rounded app icon and Open video button' }
   };
   const tabs = [...document.querySelectorAll('.gallery-tabs [role="tab"]')];
   const galleryImage = document.querySelector('#gallery-image');
@@ -41,7 +41,6 @@
     galleryImage.alt = shot.alt;
     document.querySelector('#gallery-image-wrap').classList.toggle('is-mini', key === 'mini');
     document.querySelector('#gallery-title').textContent = shot.title;
-    document.querySelector('#gallery-description').textContent = shot.description;
     document.querySelector('#gallery-source').href = `https://github.com/teamkrope/linuxplayer/blob/main/docs/screenshots/${shot.file}`;
   }
   tabs.forEach((tab, index) => {
@@ -114,9 +113,4 @@
     }, 2300);
   });
   document.querySelector('#year').textContent = new Date().getFullYear();
-  fetch('https://api.github.com/repos/teamkrope/linuxplayer/releases/latest', {
-    headers: { Accept: 'application/vnd.github+json' }
-  }).then(response => response.ok ? response.json() : null).then(release => {
-    if (release?.tag_name) document.querySelector('#release-label').textContent = `${release.tag_name} · latest release`;
-  }).catch(() => {});
 })();
