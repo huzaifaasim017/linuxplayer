@@ -27,7 +27,7 @@ The main download uses GitHub's stable latest-release URL for `linuxplayer_amd64
 
 ## Refresh the screenshots
 
-Install the current build, open a graphical desktop session, and run `scripts/capture-screenshots.sh` from the repository root. The script turns the site's generated coastal frame into a short local sample video with FFmpeg, then uses LinuxPlayer's built-in capture commands to write the real playback, options, locked, mini-player, and start-screen views to both `docs/screenshots/` and `web/assets/screenshots/`. Review each capture before publishing. The `*-v1-coast.png` filenames replace the earlier gradient captures and prevent stale browser image caches.
+Install the current build, open a graphical desktop session, and run `scripts/capture-screenshots.sh` from the repository root. The script turns the site's generated coastal frame into a short local sample video with FFmpeg, then uses LinuxPlayer's built-in capture commands to write playback, options, locked, and mini-player views to both `docs/screenshots/` and `web/assets/screenshots/`. The start-screen capture stays in `docs/screenshots/` for documentation. Review each capture before publishing. The `*-v1-coast.png` filenames replace the earlier gradient captures and prevent stale browser image caches.
 
 ## Content and attribution
 
