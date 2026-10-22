@@ -25,8 +25,15 @@
 .focus-layout { display: grid; justify-items: center; }
 .focus-intro { max-width: 920px; text-align: center; margin-bottom: 65px; }
 .focus-intro h2 { font-size: clamp(53px, 7.1vw, 104px); line-height: 1.03; letter-spacing: -.07em; margin: 23px 0 0; }
-.focus-visual { width: 100%; max-width: 1130px; overflow: hidden; position: relative; border: 1px solid #56716c; border-radius: 23px; box-shadow: 0 40px 95px #0008; background: #080f16; }
-.focus-visual img { width: 100%; transform: translateY(var(--scene-shift, 0px)) scale(1.035); will-change: transform; }
+.focus-gallery { width: 100%; max-width: 1130px; display: grid; grid-template-columns: 1.25fr .75fr; align-items: end; gap: 20px; position: relative; }
+.focus-brand { position: absolute; z-index: 3; top: -47px; left: 62%; width: 118px; height: 118px; padding: 5px; transform: translateX(-50%); object-fit: cover; background: white; border: 1px solid #d8f3f0; border-radius: 28px; box-shadow: 0 22px 55px #000a, 0 0 40px #64d5c640; }
+.focus-shot { position: relative; overflow: hidden; margin: 0; border: 1px solid #56716c; border-radius: 23px; background: #080f16; box-shadow: 0 35px 80px #0008; }
+.focus-shot-video { aspect-ratio: 1.24; }
+.focus-shot-controls { aspect-ratio: .79; }
+.focus-shot img { width: 100%; height: 100%; object-fit: cover; transform: translateY(var(--scene-shift, 0px)) scale(1.045); will-change: transform; }
+.focus-shot-video img { object-position: 38% center; }
+.focus-shot-controls img { object-position: right center; }
+.focus-shot figcaption { position: absolute; inset: auto 0 0; padding: 54px 26px 23px; background: linear-gradient(transparent, #07121bd9); color: white; font-size: 15px; font-weight: 650; letter-spacing: -.015em; }
 .focus-points { display: grid; grid-template-columns: repeat(3, 1fr); gap: 42px; width: 100%; max-width: 1130px; margin-top: 66px; }
 .focus-points article { padding-top: 24px; border-top: 1px solid #4f6668; }
 .focus-points span { display: block; color: var(--accent); font-size: 11px; font-weight: 750; letter-spacing: .14em; margin-bottom: 19px; }
@@ -103,7 +110,8 @@
   .section { padding-block: 105px; }
   .focus-intro { margin-bottom: 42px; }
   .focus-intro h2, .canvas-head h2, .preview-section .section-head h2 { font-size: clamp(51px, 9vw, 72px); }
-  .focus-visual { border-radius: 15px; }
+  .focus-gallery { gap: 13px; }
+  .focus-shot { border-radius: 16px; }
   .focus-points { gap: 20px; margin-top: 48px; }
   .focus-points h3 { font-size: 20px; }
   .pip-grid { grid-template-columns: 1fr; }
@@ -123,6 +131,11 @@
   .hero-actions .button { width: 100%; }
   .section { padding-block: 88px; }
   .focus-intro h2, .canvas-head h2, .preview-section .section-head h2 { font-size: 49px; }
+  .focus-gallery { grid-template-columns: 1.1fr .9fr; gap: 9px; }
+  .focus-brand { width: 68px; height: 68px; top: -25px; left: 55%; padding: 3px; border-radius: 18px; }
+  .focus-shot-video { aspect-ratio: .88; }
+  .focus-shot-controls { aspect-ratio: .72; }
+  .focus-shot figcaption { padding: 37px 12px 12px; font-size: 11px; }
   .focus-points { grid-template-columns: 1fr; gap: 25px; }
   .focus-points article { padding-top: 18px; }
   .focus-points span { margin-bottom: 8px; }
@@ -147,5 +160,5 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .motion-ready [data-reveal], .motion-ready [data-reveal="visual"], .motion-ready [data-reveal].is-visible { opacity: 1; filter: none; transform: none; animation: none; }
-  .hero .shot-frame img, .focus-visual img, .pip-capture { transform: none; }
+  .hero .shot-frame img, .focus-shot img, .pip-capture { transform: none; }
 }
