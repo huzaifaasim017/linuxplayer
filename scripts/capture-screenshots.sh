@@ -20,5 +20,7 @@ linuxplayer --capture-options "$root/docs/screenshots/options-v1-coast.png" "$vi
 linuxplayer --capture-hidden "$root/docs/screenshots/hidden-v1-coast.png" "$video"
 linuxplayer --capture-mini "$root/docs/screenshots/mini-player-v1-coast.png" "$video"
 linuxplayer --capture-ui "$root/docs/screenshots/empty-v1-coast.png"
-cp "$root"/docs/screenshots/*-v1-coast.png "$root/web/assets/screenshots/"
+for view in playback options hidden mini-player; do
+  cp "$root/docs/screenshots/$view-v1-coast.png" "$root/web/assets/screenshots/"
+done
 echo 'Captured the current desktop interface for the repository and website.'

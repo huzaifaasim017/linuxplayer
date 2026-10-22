@@ -20,8 +20,7 @@
     playback: { file: 'playback-v1-coast.png', title: 'Playback', alt: 'LinuxPlayer playback interface with lock control' },
     options: { file: 'options-v1-coast.png', title: 'Controls', alt: 'LinuxPlayer playback options popup' },
     hidden: { file: 'hidden-v1-coast.png', title: 'Video only', alt: 'LinuxPlayer video canvas with controls locked and hidden' },
-    mini: { file: 'mini-player-v1-coast.png', title: 'Mini-player', alt: 'LinuxPlayer compact mini-player shown over an illustrative workspace' },
-    start: { file: 'empty-v1-coast.png', title: 'Start screen', alt: 'LinuxPlayer start screen with rounded app icon and Open video button' }
+    mini: { file: 'mini-player-v1-coast.png', title: 'Mini-player', alt: 'LinuxPlayer compact mini-player shown over an illustrative workspace' }
   };
   const tabs = [...document.querySelectorAll('.gallery-tabs [role="tab"]')];
   const galleryImage = document.querySelector('#gallery-image');
