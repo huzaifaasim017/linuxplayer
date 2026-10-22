@@ -2,9 +2,13 @@
 
 A clean, modern video player for Linux.
 
-## Install
+## Download
 
-On Ubuntu or another Debian-based Linux system (64-bit), run:
+[**Download for Linux (.deb, 64-bit x86)**](https://github.com/huzaifaasim017/linuxplayer/releases/latest/download/linuxplayer_amd64.deb)
+
+Open the downloaded file with your package installer, or run `sudo apt install ./linuxplayer_amd64.deb` from its folder. The package is built on an older supported Ubuntu baseline and install-tested on newer Ubuntu. Your package manager checks dependencies on your system.
+
+For ARM64, or to let the installer choose the matching package and verify its checksum, run:
 
 ```bash
 curl -fsSLo /tmp/linuxplayer-install.sh \
@@ -12,9 +16,9 @@ curl -fsSLo /tmp/linuxplayer-install.sh \
 bash /tmp/linuxplayer-install.sh
 ```
 
-The [installer](scripts/install.sh) checks which release package fits your system, verifies its checksum, and installs it with `apt`. Open **LinuxPlayer** from the app menu or run `linuxplayer`. To remove it, run `sudo apt remove linuxplayer`.
+The [installer](scripts/install.sh) detects `amd64` or `arm64`, verifies the package checksum, and installs it with `apt`. Open **LinuxPlayer** from the app menu or run `linuxplayer`. To remove it, run `sudo apt remove linuxplayer`.
 
-Prefer a manual install? Download a `.deb` from the [latest release](https://github.com/huzaifaasim017/linuxplayer/releases/latest), then run `sudo apt install ./filename.deb` in the download folder. See [compatibility and source builds](docs/BUILDING.md) if your system's packages differ.
+See [compatibility and source builds](docs/BUILDING.md) if your system's packages differ.
 
 ## Use
 
@@ -22,7 +26,7 @@ Prefer a manual install? Download a `.deb` from the [latest release](https://git
 
 Open a video with **Open video**, drag a file into the window, or open it from your file manager. The player has seeking, speed, audio and subtitle tracks, resume, fullscreen, and a compact mini-player. Press **Space** to play or pause, **H** to hide or show controls, **I** for the mini-player, and **F1** for all shortcuts. Number keys jump through the video. A finished video plays again from the start when you press Play.
 
-In **More options**, choose **Canvas ratio** to preview a video in common social formats or a custom width:height ratio. **Fit/Fill** controls whether the video is letterboxed or cropped inside that canvas. This is a playback preview; it does not change or export the file. Choose **Make default video player** there if you want LinuxPlayer to open supported video files from your file manager. This changes your user-level desktop defaults only when you click it.
+In **More options**, choose **Canvas ratio** to preview a video in common social formats or a custom width:height ratio. **Fit/Fill** controls whether the video is letterboxed or cropped inside that canvas. This is a playback preview; it does not change or export the file. **Use system accent** applies your desktop's selected color to player highlights. Choose **Make default video player** if you want LinuxPlayer to open supported video files from your file manager. That action disappears while LinuxPlayer is the default and returns if you change the default later.
 
 ## For developers
 

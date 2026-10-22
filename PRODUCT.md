@@ -12,7 +12,7 @@ Open a local video and watch it comfortably on Ubuntu. The first release should 
 
 ## Current experience
 
-The player now includes the first-release playback controls, resume, a compact mini-player, delayed loading feedback, and a single-click replay after a video ends. Users can choose a centered canvas preview ratio for common social layouts or a custom width:height ratio. This preview does not create a new video file. An explicit action sets LinuxPlayer as the default handler for supported video MIME types. The empty state keeps **Open video** primary and offers default-player setup as a quiet secondary action.
+The player includes playback controls, resume, a compact mini-player, delayed loading feedback, and replay after a video ends. Controls fade as soon as playback starts; brief animations acknowledge clicks, skips, seeking, volume, and fullscreen. Users can choose a centered canvas preview ratio for common social layouts or a custom width:height ratio. This preview does not create a new video file. An explicit action sets LinuxPlayer as the default handler for supported video MIME types and disappears while those associations remain selected. The empty state keeps **Open video** primary. The website's bird mark and navy/teal identity carry into the app, with an optional system accent setting.
 
 ## First release scope
 
@@ -44,7 +44,7 @@ One video canvas, one compact overlay. Large, readable timeline and controls. St
 
 ## Release route
 
-1. Publish source and tagged builds on GitHub, with a `.deb` for supported Ubuntu versions and architectures.
+1. Publish source and tagged builds on GitHub, with one `.deb` per supported CPU architecture, built on an older Ubuntu baseline and tested on newer Ubuntu.
 2. Add desktop integration (`.desktop` file, icon, MIME types) and install/uninstall checks.
 3. Add Flatpak/Flathub after the first `.deb` works well. Flatpak broadens distribution, while a `.deb` keeps installation straightforward for the initial Debian/Ubuntu audience.
 4. Publish screenshots, a short demo, supported systems, and known limits with each release.

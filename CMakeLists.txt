@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(LinuxPlayer VERSION 0.4.0 LANGUAGES CXX)
+project(LinuxPlayer VERSION 0.5.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -16,7 +16,7 @@ set_target_properties(MPV::mpv PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${MPV_INCLUDE_DIR}")
 
 file(GLOB QML_ICONS CONFIGURE_DEPENDS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/qml/icons/*.svg")
-set(QML_RESOURCES qml/Main.qml qml/components/IconButton.qml ${QML_ICONS})
+set(QML_RESOURCES qml/Main.qml qml/components/IconButton.qml assets/io.github.teamkrope.LinuxPlayer.png ${QML_ICONS})
 
 qt_add_executable(linuxplayer
     src/main.cpp
@@ -24,6 +24,8 @@ qt_add_executable(linuxplayer
     src/DesktopIntegration.h
     src/MpvItem.cpp
     src/MpvItem.h
+    src/ThemeAccent.cpp
+    src/ThemeAccent.h
     src/WindowOperations.h
 )
 qt_add_resources(linuxplayer "qml_resources"
@@ -46,7 +48,7 @@ endif()
 
 install(TARGETS linuxplayer RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(FILES assets/io.github.teamkrope.LinuxPlayer.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
-install(FILES assets/io.github.teamkrope.LinuxPlayer.svg DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps)
+install(FILES assets/io.github.teamkrope.LinuxPlayer.png DESTINATION ${CMAKE_INSTALL_DATADIR}/pixmaps)
 install(FILES assets/io.github.teamkrope.LinuxPlayer.metainfo.xml DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo)
 install(FILES LICENSE DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/linuxplayer RENAME copyright)
 install(FILES README.md DESTINATION ${CMAKE_INSTALL_DATADIR}/doc/linuxplayer)

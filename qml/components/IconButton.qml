@@ -10,6 +10,7 @@ AbstractButton {
     property int iconSize: 20
     property bool selected: false
     property bool prominent: false
+    property color accentColor: "#64d5c6"
 
     implicitWidth: 44
     implicitHeight: 44
@@ -18,11 +19,12 @@ AbstractButton {
     background: Rectangle {
         radius: control.prominent ? 14 : 12
         color: control.down ? "#56ffffff"
-              : control.prominent ? (control.hovered ? "#87b6a5ff" : "#61b6a5ff")
+              : control.prominent ? (control.hovered ? Qt.rgba(control.accentColor.r, control.accentColor.g, control.accentColor.b, 0.53)
+                                                  : Qt.rgba(control.accentColor.r, control.accentColor.g, control.accentColor.b, 0.38))
               : control.hovered || control.activeFocus ? "#29ffffff"
-              : control.selected ? "#38b6a5ff" : "transparent"
+              : control.selected ? Qt.rgba(control.accentColor.r, control.accentColor.g, control.accentColor.b, 0.22) : "transparent"
         border.width: control.activeFocus ? 2 : control.prominent ? 1 : 0
-        border.color: control.activeFocus ? "#d9d0ff" : "#b6a5ff"
+        border.color: control.accentColor
         Behavior on color { ColorAnimation { duration: 150 } }
     }
 

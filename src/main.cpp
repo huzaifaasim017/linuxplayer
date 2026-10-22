@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "MpvItem.h"
 #include "DesktopIntegration.h"
+#include "ThemeAccent.h"
 #include "WindowOperations.h"
 
 #include <QGuiApplication>
 #include <QImage>
+#include <QIcon>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickWindow>
@@ -22,6 +24,7 @@ int main(int argc, char *argv[])
     app.setApplicationName(QStringLiteral("LinuxPlayer"));
     app.setOrganizationName(QStringLiteral("TeamKrope"));
     app.setDesktopFileName(QStringLiteral("io.github.teamkrope.LinuxPlayer"));
+    app.setWindowIcon(QIcon(QStringLiteral(":/assets/io.github.teamkrope.LinuxPlayer.png")));
 
     // libmpv requires the numeric C locale after Qt's application setup.
     std::setlocale(LC_NUMERIC, "C");
@@ -29,9 +32,11 @@ int main(int argc, char *argv[])
     qmlRegisterType<MpvItem>("LinuxPlayer", 1, 0, "MpvItem");
     WindowOperations windowOperations;
     DesktopIntegration desktopIntegration;
+    ThemeAccent themeAccent;
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty(QStringLiteral("windowOperations"), &windowOperations);
     engine.rootContext()->setContextProperty(QStringLiteral("desktopIntegration"), &desktopIntegration);
+    engine.rootContext()->setContextProperty(QStringLiteral("themeAccent"), &themeAccent);
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed,
                      &app, [] { QCoreApplication::exit(1); }, Qt::QueuedConnection);
     engine.load(QUrl(QStringLiteral("qrc:/qml/Main.qml")));

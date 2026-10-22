@@ -40,6 +40,15 @@ else
 fi
 MOCK
 
+cat > "$test_dir/bin/dpkg" <<'MOCK'
+#!/usr/bin/env bash
+if [[ "$1" == --print-architecture ]]; then
+    printf '%s\n' "${MOCK_ARCH:-amd64}"
+else
+    /usr/bin/dpkg "$@"
+fi
+MOCK
+
 cat > "$test_dir/bin/sudo" <<'MOCK'
 #!/usr/bin/env bash
 "$@"
@@ -48,25 +57,31 @@ chmod +x "$test_dir/bin/"*
 export PATH="$test_dir/bin:$PATH"
 export MOCK_INSTALL_LOG="$test_dir/installed"
 
-MOCK_COMPAT=ubuntu26.04_amd64 bash "$repo_root/scripts/install.sh" > "$test_dir/output"
-grep -q 'ubuntu26.04_amd64.deb' "$MOCK_INSTALL_LOG"
+MOCK_ARCH=amd64 MOCK_COMPAT=amd64 bash "$repo_root/scripts/install.sh" > "$test_dir/output"
+grep -q 'linuxplayer_amd64.deb' "$MOCK_INSTALL_LOG"
 
 : > "$MOCK_INSTALL_LOG"
-MOCK_COMPAT=ubuntu24.04_amd64 bash "$repo_root/scripts/install.sh" > "$test_dir/output"
-grep -q 'ubuntu24.04_amd64.deb' "$MOCK_INSTALL_LOG"
+MOCK_ARCH=arm64 MOCK_COMPAT=arm64 bash "$repo_root/scripts/install.sh" > "$test_dir/output"
+grep -q 'linuxplayer_arm64.deb' "$MOCK_INSTALL_LOG"
 
 : > "$MOCK_INSTALL_LOG"
-if MOCK_COMPAT=none bash "$repo_root/scripts/install.sh" > "$test_dir/output" 2>&1; then
+if MOCK_ARCH=amd64 MOCK_COMPAT=none bash "$repo_root/scripts/install.sh" > "$test_dir/output" 2>&1; then
     echo 'Installer accepted an incompatible package.' >&2
     exit 1
 fi
 test ! -s "$MOCK_INSTALL_LOG"
 
-if MOCK_COMPAT=ubuntu26.04_amd64 MOCK_BAD_CHECKSUM=1 bash "$repo_root/scripts/install.sh" > "$test_dir/output" 2>&1; then
+if MOCK_ARCH=amd64 MOCK_COMPAT=amd64 MOCK_BAD_CHECKSUM=1 bash "$repo_root/scripts/install.sh" > "$test_dir/output" 2>&1; then
     echo 'Installer accepted a bad checksum.' >&2
     exit 1
 fi
 grep -q 'Checksum verification failed' "$test_dir/output"
 test ! -s "$MOCK_INSTALL_LOG"
 
-echo 'Installer selection and checksum checks passed.'
+if MOCK_ARCH=riscv64 MOCK_COMPAT=none bash "$repo_root/scripts/install.sh" > "$test_dir/output" 2>&1; then
+    echo 'Installer accepted an unsupported architecture.' >&2
+    exit 1
+fi
+grep -q 'no LinuxPlayer release package' "$test_dir/output"
+
+echo 'Installer architecture, dependency, and checksum checks passed.'

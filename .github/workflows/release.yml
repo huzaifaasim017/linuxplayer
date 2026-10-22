@@ -1,4 +1,4 @@
-name: Release Ubuntu packages
+name: Release Linux packages
 
 on:
   push:
@@ -13,8 +13,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ubuntu: ['24.04', '26.04']
-    runs-on: ubuntu-${{ matrix.ubuntu }}
+        include:
+          - runner: ubuntu-24.04
+            arch: amd64
+          - runner: ubuntu-24.04-arm
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v7
 
@@ -30,7 +34,7 @@ jobs:
 
       - name: Build and test
         run: |
-          cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release -DLINUXPLAYER_UBUNTU_VERSION=${{ matrix.ubuntu }}
+          cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release
           cmake --build build-release --parallel
           ctest --test-dir build-release --output-on-failure
 
@@ -41,25 +45,48 @@ jobs:
           (cd build-release && cpack -G DEB)
           package=$(find build-release -maxdepth 1 -name 'linuxplayer_*.deb' -print -quit)
           test -n "$package"
-          version=$(dpkg-deb -f "$package" Version)
-          architecture=$(dpkg-deb -f "$package" Architecture)
-          test "$GITHUB_REF_NAME" = "v$version"
-          test "$architecture" = amd64
+          test "$(dpkg-deb -f "$package" Version)" = "${GITHUB_REF_NAME#v}"
+          test "$(dpkg-deb -f "$package" Architecture)" = "${{ matrix.arch }}"
           sudo apt-get install -y "./$package"
           QT_QPA_PLATFORM=offscreen linuxplayer --smoke-test
           mkdir -p dist
-          asset="linuxplayer_ubuntu${{ matrix.ubuntu }}_${architecture}.deb"
+          asset="linuxplayer_${{ matrix.arch }}.deb"
           cp "$package" "dist/$asset"
           (cd dist && sha256sum "$asset" > "$asset.sha256")
 
       - uses: actions/upload-artifact@v7
         with:
-          name: ubuntu-${{ matrix.ubuntu }}-amd64
+          name: package-${{ matrix.arch }}
           path: dist/
           if-no-files-found: error
 
-  publish:
+  validate-newer:
     needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-26.04
+            arch: amd64
+          - runner: ubuntu-26.04-arm
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: package-${{ matrix.arch }}
+          path: dist/
+      - name: Verify newer Ubuntu installation
+        shell: bash
+        run: |
+          set -euo pipefail
+          (cd dist && sha256sum --check "linuxplayer_${{ matrix.arch }}.deb.sha256")
+          sudo apt-get update
+          sudo apt-get install -y "./dist/linuxplayer_${{ matrix.arch }}.deb"
+          QT_QPA_PLATFORM=offscreen linuxplayer --smoke-test
+
+  publish:
+    needs: validate-newer
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -67,7 +94,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/download-artifact@v8
         with:
-          pattern: ubuntu-*-amd64
+          pattern: package-*
           path: dist/
           merge-multiple: true
       - name: Publish latest release

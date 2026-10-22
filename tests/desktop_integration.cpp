@@ -50,8 +50,23 @@ int main(int argc, char **argv)
     QTimer::singleShot(10000, &loop, &QEventLoop::quit);
     integration.setAsDefaultVideoPlayer();
     loop.exec();
-    if (!success || !QFile::exists(config + QStringLiteral("/video/mp4")))
+    if (!success || !integration.defaultVideoPlayer()
+        || !QFile::exists(config + QStringLiteral("/video/mp4")))
         return 4;
+
+    QFile association(config + QStringLiteral("/video/mp4"));
+    if (!association.open(QIODevice::WriteOnly | QIODevice::Truncate)
+        || association.write("other-player.desktop\n") < 0)
+        return 6;
+    association.close();
+    QEventLoop statusLoop;
+    QObject::connect(&integration, &DesktopIntegration::defaultVideoPlayerChanged, &statusLoop,
+                     [&] { if (!integration.defaultVideoPlayer()) statusLoop.quit(); });
+    QTimer::singleShot(3000, &statusLoop, &QEventLoop::quit);
+    integration.refreshDefaultStatus();
+    statusLoop.exec();
+    if (integration.defaultVideoPlayer())
+        return 7;
 
     QFile::remove(desktopPath);
     success = true;
