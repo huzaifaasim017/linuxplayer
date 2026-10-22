@@ -20,7 +20,7 @@ ApplicationWindow {
     readonly property bool hasMedia: player.sourceUrl.toString().length > 0
     property bool controlsShown: true
     property bool toolsHidden: false
-    property bool showRevealHint: true
+    property bool showRevealHint: false
     property bool draggingSeek: false
     property real seekPreview: 0
     property real rememberedVolume: 70
@@ -69,14 +69,17 @@ ApplicationWindow {
         controlsShown = !toolsHidden
         if (toolsHidden) {
             hideTimer.stop()
-            showRevealHint = true
-            hideRevealTimer.restart()
+            showRevealHint = false
+            hideRevealTimer.stop()
             trackPopup.close()
             speedPopup.close()
             settingsPopup.close()
             helpPopup.close()
             ratioPopup.close()
-        } else revealControls()
+        } else {
+            showRevealHint = false
+            revealControls()
+        }
     }
 
     function toggleMiniPlayer() {
@@ -164,6 +167,7 @@ ApplicationWindow {
         if (willPlay) {
             hideTimer.stop()
             controlsShown = false
+            showRevealHint = false
         } else revealControls()
     }
 
@@ -473,8 +477,10 @@ ApplicationWindow {
             if (player.paused && !player.ended) window.revealControls()
         }
         onLoadingChanged: {
-            if (!player.loading && window.hasMedia && !player.paused && !player.ended)
+            if (!player.loading && window.hasMedia && !player.paused && !player.ended) {
                 window.controlsShown = false
+                window.showRevealHint = false
+            }
         }
         onEndedChanged: {
             if (player.ended) {
@@ -912,10 +918,10 @@ ApplicationWindow {
             }
             IconButton {
                 accentColor: window.accent
-                iconName: "eye-off"
-                Accessible.name: "Hide controls"
+                iconName: "lock"
+                Accessible.name: "Lock controls"
                 ToolTip.visible: hovered
-                ToolTip.text: "Hide all controls (H)"
+                ToolTip.text: "Lock controls (H)"
                 onClicked: window.toggleTools()
             }
         }
@@ -924,18 +930,18 @@ ApplicationWindow {
     IconButton {
         accentColor: window.accent
         id: revealButton
-        visible: window.hasMedia && !window.overlayVisible && !window.miniOverlayVisible && window.showRevealHint
+        visible: window.hasMedia && window.toolsHidden && window.showRevealHint && !window.miniMode
         anchors.top: parent.top
         anchors.right: parent.right
         anchors.topMargin: 20
         anchors.rightMargin: 22
         width: 44
         height: 44
-        iconName: "eye"
-        Accessible.name: "Show controls"
+        iconName: "lock-open"
+        Accessible.name: "Unlock controls"
         ToolTip.visible: hovered
-        ToolTip.text: "Show controls (H)"
-        onClicked: window.toolsHidden ? window.toggleTools() : window.revealControls()
+        ToolTip.text: "Unlock controls (H)"
+        onClicked: window.toggleTools()
         background: Rectangle { radius: 14; color: revealButton.hovered ? "#d9284852" : "#d0152833"; border.color: "#55ffffff" }
     }
 
