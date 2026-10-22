@@ -2,7 +2,7 @@
 
 A two-page website for [LinuxPlayer](https://github.com/teamkrope/linuxplayer). It uses real application screenshots, the final bird mark shared with the desktop app, and an illustrative frame for the canvas demo. The site is self-contained and has no runtime or build dependencies beyond Node.js.
 
-`index.html` presents the player as a product showcase. Shared components and the download page use `styles.css`; homepage presentation lives in `showcase.css`. The first feature scene uses cropped views of two real app captures; the hero and download call to action repeat the app mark at larger sizes. `motion.js` handles blur reveals and subtle scene movement, with a reduced-motion fallback. Keep the real screenshots and interactive gallery/ratio demo intact when changing the layout.
+`index.html` presents the player as a product showcase. Shared components and the download page use `styles.css`; homepage presentation lives in `showcase.css`. The first feature scene uses cropped views of two real app captures with the app mark at their meeting point. `motion.js` handles blur reveals and subtle scene movement, with a reduced-motion fallback. Keep the real screenshots and interactive gallery/ratio demo intact when changing the layout.
 
 ## Preview locally
 
