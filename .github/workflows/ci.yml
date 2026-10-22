@@ -77,7 +77,17 @@ jobs:
           name: package-${{ matrix.arch }}
           path: dist/
       - name: Install and launch on newer Ubuntu
+        timeout-minutes: 20
         run: |
+          # The hosted amd64 image can stall on its Azure APT mirror. Use the
+          # main Ubuntu archive for this validation runner.
+          if [ "${{ matrix.arch }}" = amd64 ]; then
+            for source in /etc/apt/apt-mirrors.txt /etc/apt/sources.list.d/ubuntu.sources; do
+              if [ -f "$source" ]; then
+                sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' "$source"
+              fi
+            done
+          fi
           sudo apt-get update
           sudo apt-get install -y "./dist/linuxplayer_${{ matrix.arch }}.deb"
           QT_QPA_PLATFORM=offscreen linuxplayer --smoke-test
