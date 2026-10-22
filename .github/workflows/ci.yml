@@ -48,6 +48,8 @@ jobs:
           test "$(dpkg-deb -f "$package" Architecture)" = "${{ matrix.arch }}"
           dpkg-deb -f "$package" Depends | grep -F 'qml6-module-qtquick-controls'
           dpkg-deb -f "$package" Depends | grep -F 'libmpv2'
+          dpkg-deb -f "$package" Depends | grep -F 'libqt6gui6t64 | libqt6gui6'
+          dpkg-deb -f "$package" Depends | grep -F 'libqt6opengl6t64 | libqt6opengl6'
           dpkg-deb -f "$package" Depends | grep -F 'libqt6svg6'
           dpkg-deb -f "$package" Depends | grep -F 'qml6-module-qtqml-workerscript'
           mkdir -p ../dist

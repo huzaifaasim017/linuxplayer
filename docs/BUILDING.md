@@ -41,4 +41,4 @@ cpack -G DEB
 sudo apt install ./linuxplayer_*.deb
 ```
 
-Packages built on one distribution may require libraries unavailable on another. The [release workflow](../.github/workflows/release.yml) builds on Ubuntu 24.04 for `amd64` and `arm64`, then verifies installation on Ubuntu 26.04 as well. The package names identify CPU architecture, not an Ubuntu version. Playback formats and hardware acceleration depend on the distribution's mpv/FFmpeg packages and graphics drivers.
+Packages built on one distribution may require libraries unavailable on another. The [release workflow](../.github/workflows/release.yml) builds on Ubuntu 24.04 for `amd64` and `arm64`, then verifies installation on Ubuntu 26.04 as well. The package declares Qt GUI and OpenGL package-name alternatives used across these Ubuntu releases; this is why the Debian dependencies are maintained explicitly in `cmake/Packaging.cmake` instead of being generated from the build runner. The package names identify CPU architecture, not an Ubuntu version. Playback formats and hardware acceleration depend on the distribution's mpv/FFmpeg packages and graphics drivers.
