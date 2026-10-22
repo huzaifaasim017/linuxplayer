@@ -33,9 +33,4 @@
   });
 
   document.querySelector('#year').textContent = new Date().getFullYear();
-  fetch('https://api.github.com/repos/teamkrope/linuxplayer/releases/latest', {
-    headers: { Accept: 'application/vnd.github+json' }
-  }).then(response => response.ok ? response.json() : null).then(release => {
-    if (release?.tag_name) document.querySelector('#download-release').textContent = release.tag_name;
-  }).catch(() => {});
 })();
