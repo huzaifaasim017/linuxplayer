@@ -2,7 +2,7 @@
 
 A clean, modern video player for Linux.
 
-[Website](https://teamkrope.github.io/linuxplayer/) · [Contact](mailto:contact@teamkrope.com)
+[Website](https://linuxplayer-website.vercel.app/) · [Contact](mailto:contact@teamkrope.com)
 
 ## Download
 

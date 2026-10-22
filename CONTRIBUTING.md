@@ -21,7 +21,7 @@ Follow the [build instructions](docs/BUILDING.md). For a quick QML startup check
 
 If a problem occurs only under Wayland, X11, GNOME, KDE, or a particular GPU, say so. A short reproducible sample is more useful than a large film file.
 
-For website changes, work in [`web/`](web/README.md), run `npm run build && npm run check` there, and check the result on desktop and a narrow screen. Keep download links pointed at the latest release assets, and distinguish app screenshots from illustrations.
+The [website](https://linuxplayer-website.vercel.app/) is deployed separately from the LinuxPlayer application repository. Report website issues here; maintainers can coordinate changes to its private source repository.
 
 ## Pull requests
 

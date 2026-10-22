@@ -53,7 +53,7 @@ Check the launcher, file manager **Open With**, install and uninstall behavior, 
 - For other distribution and architecture packages, first add tested build jobs and distinct asset names.
 - Include supported systems, known limitations, source/build instructions, and any available demo or screenshots in the release notes.
 - Run the README installer against the published download on each supported Ubuntu version to catch download or packaging mistakes.
-- Website changes in `web/` deploy through the Website workflow on `main`. Check its GitHub Pages result and both download links after merging.
+- The website deploys separately on Vercel. After publishing a release, check its download links for both package architectures.
 
 Later, Flatpak/Flathub can be added as a separate distribution path after `.deb` releases are reliable.
 
