@@ -26,7 +26,7 @@
 .focus-intro { max-width: 920px; text-align: center; margin-bottom: 65px; }
 .focus-intro h2 { font-size: clamp(53px, 7.1vw, 104px); line-height: 1.03; letter-spacing: -.07em; margin: 23px 0 0; }
 .focus-gallery { width: 100%; max-width: 1130px; display: grid; grid-template-columns: 1.25fr .75fr; align-items: end; gap: 20px; position: relative; }
-.focus-brand { position: absolute; z-index: 3; top: -47px; left: 62%; width: 118px; height: 118px; padding: 5px; transform: translateX(-50%); object-fit: cover; background: white; border: 1px solid #d8f3f0; border-radius: 28px; box-shadow: 0 22px 55px #000a, 0 0 40px #64d5c640; }
+.focus-brand { position: absolute; z-index: 3; top: -47px; left: 50%; width: 118px; height: 118px; padding: 5px; transform: translateX(-50%); object-fit: cover; background: white; border: 1px solid #d8f3f0; border-radius: 28px; box-shadow: 0 22px 55px #000a, 0 0 40px #64d5c640; }
 .focus-shot { position: relative; overflow: hidden; margin: 0; border: 1px solid #56716c; border-radius: 23px; background: #080f16; box-shadow: 0 35px 80px #0008; }
 .focus-shot-video { aspect-ratio: 1.24; }
 .focus-shot-controls { aspect-ratio: .79; }
@@ -89,6 +89,8 @@
 .motion-ready [data-reveal] { opacity: 0; filter: blur(16px); transform: translate3d(0, 30px, 0); transition: opacity .8s var(--showcase-ease), filter 1s var(--showcase-ease), transform 1s var(--showcase-ease); transition-delay: var(--reveal-delay, 0ms); }
 .motion-ready [data-reveal="visual"] { transform: translate3d(0, 48px, 0) scale(.94); }
 .motion-ready [data-reveal].is-visible { opacity: 1; filter: blur(0); transform: translate3d(0, 0, 0) scale(1); }
+.motion-ready .focus-brand[data-reveal] { filter: blur(22px); transform: translate3d(-50%, 18px, 0) scale(.82); transition-delay: 140ms; }
+.motion-ready .focus-brand[data-reveal].is-visible { filter: blur(0); transform: translate3d(-50%, 0, 0) scale(1); }
 .motion-ready .hero [data-reveal].is-visible { animation: hero-arrive 1.1s var(--showcase-ease) both; }
 .motion-ready .hero .hero-shot.is-visible { animation-delay: .12s; }
 .motion-ready .hero .hero-actions.is-visible { animation-delay: .22s; }
@@ -132,7 +134,7 @@
   .section { padding-block: 88px; }
   .focus-intro h2, .canvas-head h2, .preview-section .section-head h2 { font-size: 49px; }
   .focus-gallery { grid-template-columns: 1.1fr .9fr; gap: 9px; }
-  .focus-brand { width: 68px; height: 68px; top: -25px; left: 55%; padding: 3px; border-radius: 18px; }
+  .focus-brand { width: 68px; height: 68px; top: -25px; padding: 3px; border-radius: 18px; }
   .focus-shot-video { aspect-ratio: .88; }
   .focus-shot-controls { aspect-ratio: .72; }
   .focus-shot figcaption { padding: 37px 12px 12px; font-size: 11px; }
@@ -160,5 +162,6 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .motion-ready [data-reveal], .motion-ready [data-reveal="visual"], .motion-ready [data-reveal].is-visible { opacity: 1; filter: none; transform: none; animation: none; }
+  .motion-ready .focus-brand[data-reveal], .motion-ready .focus-brand[data-reveal].is-visible { filter: none; transform: translateX(-50%); }
   .hero .shot-frame img, .focus-shot img, .pip-capture { transform: none; }
 }

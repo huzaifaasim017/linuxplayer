@@ -25,6 +25,8 @@ SITE_URL=https://teamkrope.github.io/linuxplayer/ npm run build
 
 `dist/` contains the deployable static site, canonical URLs for both pages, Open Graph/Twitter image URLs, `robots.txt`, and a two-page `sitemap.xml`. The [Website workflow](../.github/workflows/pages.yml) builds and deploys this directory on changes to `web/` on `main`. Set GitHub Pages source to **GitHub Actions** in repository settings. For another host or domain, update `SITE_URL` in the workflow first. Do not publish a build created without `SITE_URL`; it deliberately disallows crawling.
 
+For Vercel, import the repository with `web` as the Root Directory. `vercel.json` runs the build and serves `dist/`. The build uses Vercel's production project URL for canonical links and the sitemap when `SITE_URL` is unset; set `SITE_URL` to an HTTPS custom domain to override it.
+
 The main download uses GitHub's stable latest-release URL for `linuxplayer_amd64.deb`; ARM64 is available as an optional link and through the installer. The release workflow publishes one package per CPU architecture, built on Ubuntu 24.04 and install-tested on Ubuntu 26.04. The installer link uses the latest `install.sh`, which detects architecture and checks the package checksum. Update product copy and screenshots when features change; screenshot source files live in `../docs/screenshots/`.
 
 ## Refresh the screenshots
