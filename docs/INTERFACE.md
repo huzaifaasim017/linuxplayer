@@ -28,7 +28,7 @@ The examples are grounded in [YouTube's standard 16:9 player](https://support.go
 
 Click the picture-in-picture icon or press **I** to turn the current window into a compact, frameless player. Playback continues in the same `MpvItem`; there is no second decoder or handoff. It offers a slim seek bar, play/pause, skips, time, and a restore button. Press **I** or **Escape** to restore the previous size and window state. Drag its top area to move it and its bottom-right corner to resize it.
 
-![Compact player on Wayland](screenshots/mini-player-v1.png)
+![Compact player on Wayland](screenshots/mini-player-v1-coast.png)
 
 The app requests an always-on-top window, but Qt leaves that decision to the desktop's window manager or Wayland compositor. Do not promise that it will float over every app on every desktop. Keep restore and playback usable even if the compositor ignores the hint.
 
