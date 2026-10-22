@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: Installation and usage
-    url: https://github.com/huzaifaasim017/linuxplayer/blob/main/SUPPORT.md
+    url: https://github.com/teamkrope/linuxplayer/blob/main/SUPPORT.md
     about: Read setup guidance before opening a support issue.
   - name: Security report
-    url: https://github.com/huzaifaasim017/linuxplayer/blob/main/SECURITY.md
+    url: https://github.com/teamkrope/linuxplayer/blob/main/SECURITY.md
     about: Report security concerns privately.

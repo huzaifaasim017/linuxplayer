@@ -24,6 +24,84 @@ DesktopIntegration::DesktopIntegration(QObject *parent) : QObject(parent)
             emit defaultPlayerFinished(false, QStringLiteral("Could not start xdg-mime."));
         }
     });
+    connect(&m_statusProcess, qOverload<int, QProcess::ExitStatus>(&QProcess::finished),
+            this, &DesktopIntegration::statusProcessFinished);
+    connect(&m_statusProcess, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
+        if (error == QProcess::FailedToStart && m_statusRunning)
+            finishStatus(false);
+    });
+    QTimer::singleShot(0, this, &DesktopIntegration::refreshDefaultStatus);
+}
+
+void DesktopIntegration::setDefaultStatus(bool value)
+{
+    if (m_defaultVideoPlayer == value)
+        return;
+    m_defaultVideoPlayer = value;
+    emit defaultVideoPlayerChanged();
+}
+
+void DesktopIntegration::finishStatus(bool value)
+{
+    m_statusRunning = false;
+    setDefaultStatus(value);
+    if (!m_statusReady) {
+        m_statusReady = true;
+        emit defaultStatusReadyChanged();
+    }
+    if (m_statusRefreshPending) {
+        m_statusRefreshPending = false;
+        QTimer::singleShot(0, this, &DesktopIntegration::refreshDefaultStatus);
+    }
+}
+
+void DesktopIntegration::refreshDefaultStatus()
+{
+    if (m_statusRunning) {
+        m_statusRefreshPending = true;
+        return;
+    }
+    bool installed = false;
+    for (const QString &dataPath : QStandardPaths::standardLocations(QStandardPaths::GenericDataLocation)) {
+        if (QFileInfo::exists(dataPath + QStringLiteral("/applications/") + QLatin1String(desktopId))) {
+            installed = true;
+            break;
+        }
+    }
+    if (!installed || QStandardPaths::findExecutable(QStringLiteral("xdg-mime")).isEmpty()) {
+        setDefaultStatus(false);
+        if (!m_statusReady) {
+            m_statusReady = true;
+            emit defaultStatusReadyChanged();
+        }
+        return;
+    }
+    m_statusIndex = 0;
+    m_statusRunning = true;
+    advanceStatus();
+}
+
+void DesktopIntegration::advanceStatus()
+{
+    if (m_statusIndex == m_mimeTypes.size()) {
+        finishStatus(true);
+        return;
+    }
+    m_statusProcess.start(QStringLiteral("xdg-mime"),
+                          {QStringLiteral("query"), QStringLiteral("default"), m_mimeTypes.at(m_statusIndex)});
+}
+
+void DesktopIntegration::statusProcessFinished(int exitCode, QProcess::ExitStatus status)
+{
+    if (!m_statusRunning)
+        return;
+    if (status != QProcess::NormalExit || exitCode != 0
+        || QString::fromUtf8(m_statusProcess.readAllStandardOutput()).trimmed() != QLatin1String(desktopId)) {
+        finishStatus(false);
+        return;
+    }
+    ++m_statusIndex;
+    QTimer::singleShot(0, this, &DesktopIntegration::advanceStatus);
 }
 
 void DesktopIntegration::setAsDefaultVideoPlayer()
@@ -58,6 +136,9 @@ void DesktopIntegration::advance()
 {
     if (m_index == m_mimeTypes.size()) {
         m_running = false;
+        if (m_failures == 0)
+            setDefaultStatus(true);
+        refreshDefaultStatus();
         emit defaultPlayerFinished(m_failures == 0,
             m_failures == 0 ? QStringLiteral("LinuxPlayer is now your default video player.")
                             : QStringLiteral("Could not set all video associations. Check desktop settings."));

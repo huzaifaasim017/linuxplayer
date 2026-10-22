@@ -10,9 +10,7 @@ The [product direction](PRODUCT.md) describes current scope. Keep additions focu
 
 ## Build and test
 
-Follow the [build instructions](docs/BUILDING.md). For a code change:
-
-For a quick QML startup check, run `ctest --test-dir build --output-on-failure`. To capture the empty state for visual review, run `QT_QPA_PLATFORM=offscreen ./build/linuxplayer --capture-ui /tmp/linuxplayer-ui.png`.
+Follow the [build instructions](docs/BUILDING.md). For a quick QML startup check, run `ctest --test-dir build --output-on-failure`. To capture the empty state for visual review, run `QT_QPA_PLATFORM=offscreen ./build/linuxplayer --capture-ui /tmp/linuxplayer-ui.png`.
 
 1. Reproduce the issue before editing, if possible.
 2. Keep playback engine calls in the C++ playback layer; expose UI state and actions to QML through its public interface.
@@ -22,6 +20,8 @@ For a quick QML startup check, run `ctest --test-dir build --output-on-failure`.
 5. Include the commands you ran and their results in the pull request.
 
 If a problem occurs only under Wayland, X11, GNOME, KDE, or a particular GPU, say so. A short reproducible sample is more useful than a large film file.
+
+For website changes, work in [`web/`](web/README.md), run `npm run build && npm run check` there, and check the result on desktop and a narrow screen. Keep download links pointed at the latest release assets, and distinguish app screenshots from illustrations.
 
 ## Pull requests
 

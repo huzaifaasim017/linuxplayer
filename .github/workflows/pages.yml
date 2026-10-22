@@ -1,0 +1,43 @@
+name: Website
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'web/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/configure-pages@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Build and check site
+        working-directory: web
+        env:
+          SITE_URL: https://teamkrope.github.io/linuxplayer/
+        run: |
+          npm run build
+          npm run check
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: web/dist
+      - id: deployment
+        uses: actions/deploy-pages@v4

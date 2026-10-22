@@ -24,11 +24,12 @@ local file / file manager / command line
 | `src/main.cpp` | Start Qt, expose playback and window operations to QML, open a command-line file. |
 | `src/MpvItem.h` and `.cpp` | Own the libmpv handle and render context; expose playback state and commands to QML. |
 | `src/DesktopIntegration.h` and `.cpp` | Set and verify user-requested video MIME defaults through `xdg-mime`. |
+| `src/ThemeAccent.h` and `.cpp` | Read the selected Ubuntu/GNOME accent, keep it legible on dark controls, and persist the user's accent preference. |
 | `src/WindowOperations.h` | Ask the window system to move or resize the compact player from a pointer press. |
 | `qml/Main.qml` | Window layout, file actions, control overlay, settings menus, shortcuts, and focus behavior. |
 | `qml/components/` | Reusable interface components. |
 | `qml/icons/` | Interface icon assets. |
-| `assets/` | Installed launcher, application icon, and AppStream metadata. |
+| `assets/` | Installed launcher, rounded application icon, original logo artwork, and AppStream metadata. |
 | `cmake/Packaging.cmake` | CPack settings for Debian packages. |
 
 The UI must treat `MpvItem` as its playback boundary. When adding a new libmpv feature, expose a concise property or method in C++ first, then bind the QML interface to that API. Keep file-system and playback errors visible to the UI rather than silently swallowing them. Avoid embedding codec behavior or direct mpv calls in QML.
@@ -48,6 +49,10 @@ Mini-player mode resizes the existing `ApplicationWindow` and keeps the same `Mp
 **Known technical constraint:** Qt documents `QQuickFramebufferObject` as a legacy, OpenGL-only class. `main.cpp` therefore forces Qt Quick to use OpenGL. This is a deliberate MVP tradeoff for a small render adapter, not a promise of Vulkan or software-renderer support. Future rendering work should evaluate a Qt 6 scene graph/QRhi path while preserving the `MpvItem` public playback API. See [Qt's class documentation](https://doc.qt.io/qt-6/qquickframebufferobject.html).
 
 The desktop entry uses the same application ID as the icon and AppStream metadata: `io.github.teamkrope.LinuxPlayer`. Keep these names aligned when renaming the app. It declares video MIME types so file managers can offer **Open With**. The `DesktopIntegration` service changes per-user defaults only after an explicit click; it verifies the installed desktop entry and each `xdg-mime` association asynchronously so the UI stays responsive.
+
+The **Make default video player** action is hidden only when all advertised video MIME types currently resolve to LinuxPlayer. `DesktopIntegration` checks `xdg-mime` at startup and when More options opens. If another application takes an association, the action returns. This is based on actual desktop state, not a saved one-time flag.
+
+`ThemeAccent` reads Ubuntu's Yaru theme variant first, then GNOME's `accent-color`, then Qt's palette highlight. The user opts in through More options; brand teal remains the default. Selected colors are brightened when necessary for contrast on the dark controls. The service refreshes when the app becomes active, so changing the desktop theme in Settings is reflected when returning to the player. Other desktops can use the Qt palette fallback.
 
 Canvas presets are QML data because they only change the size of the centered `MpvItem` parent. The playback adapter's existing fit/fill control handles source framing within that parent. Presets do not alter media bytes or capture/export settings.
 

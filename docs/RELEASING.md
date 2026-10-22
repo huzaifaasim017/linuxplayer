@@ -4,17 +4,18 @@ This checklist is for a tagged source release and a Debian package built on a su
 
 ## 1. Set the release scope
 
-- Decide the supported distribution versions, CPU architectures, and known limits based on machines or VMs actually tested. The current workflow builds and installs separate packages on Ubuntu 24.04 and 26.04 (amd64).
+- Decide the supported distribution versions, CPU architectures, and known limits based on machines or VMs actually tested. The current workflow builds `amd64` and `arm64` packages on Ubuntu 24.04, then checks installation on Ubuntu 26.04.
 - Update the version in the top-level CMake project and release notes.
 - Check [PRODUCT.md](../PRODUCT.md) against implemented features. Remove claims for behavior not verified.
 - Verify that the project's GitHub profile has a working private Code of Conduct contact method.
 - Check that the AppStream homepage in `assets/io.github.teamkrope.LinuxPlayer.metainfo.xml` points to the published repository.
-- Replace the CPack maintainer contact in `cmake/Packaging.cmake` with a monitored project address before distributing packages.
+- Confirm the CPack maintainer address is `contact@teamkrope.com`.
+- If the logo changes, run `scripts/build-icon.sh` with FFmpeg installed. It composes the unchanged source artwork on a white rounded square and writes the same icon to the desktop and website.
 
 ## 2. Build from a clean checkout
 
 ```bash
-cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release -DLINUXPLAYER_UBUNTU_VERSION="$(. /etc/os-release; echo "$VERSION_ID")"
+cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release
 cmake --build build-release --parallel
 ctest --test-dir build-release --output-on-failure
 cd build-release
@@ -48,10 +49,11 @@ Check the launcher, file manager **Open With**, install and uninstall behavior, 
 
 ## 5. Publish
 
-- Add release notes at `docs/releases/vX.Y.Z.md`, then push a matching `vX.Y.Z` tag. The release workflow builds and installs on Ubuntu 24.04 and 26.04, then publishes both `.deb` files, their SHA-256 checksums, and `install.sh` as the latest GitHub Release. The README installer depends on those asset names and the release being marked Latest.
+- Add release notes at `docs/releases/vX.Y.Z.md`, then push a matching `vX.Y.Z` tag. The release workflow publishes one `.deb` per CPU architecture (`linuxplayer_amd64.deb` and `linuxplayer_arm64.deb`), their SHA-256 checksums, and `install.sh` as the latest GitHub Release. The README installer and website depend on these stable asset names and the release being marked Latest.
 - For other distribution and architecture packages, first add tested build jobs and distinct asset names.
 - Include supported systems, known limitations, source/build instructions, and any available demo or screenshots in the release notes.
 - Run the README installer against the published download on each supported Ubuntu version to catch download or packaging mistakes.
+- Website changes in `web/` deploy through the Website workflow on `main`. Check its GitHub Pages result and both download links after merging.
 
 Later, Flatpak/Flathub can be added as a separate distribution path after `.deb` releases are reliable.
 

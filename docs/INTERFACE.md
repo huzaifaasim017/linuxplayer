@@ -4,14 +4,17 @@ LinuxPlayer normally keeps the video as the full window canvas. The floating hea
 
 ## Control visibility
 
-- Moving the pointer reveals the header and dock during playback. They fade after a short idle period while the video is playing.
-- The eye button in the header, or **H**, enters a manual hidden mode. Pointer movement reveals only an eye icon in the top corner. Clicking it or pressing **H** restores the controls; the icon then fades away again.
+- Starting playback hides the header and dock immediately with a short fade. Moving the pointer reveals them; they fade again after a short idle period while the video is playing.
+- The lock button in the header, or **H**, enters a manual hidden mode with no persistent on-screen controls. Pointer movement briefly reveals an unlock button in the top corner. Clicking it or pressing **H** restores the controls. During normal playback the unlock button does not appear when the controls fade.
 - Pausing keeps controls available. Opening a menu or dragging the timeline prevents the automatic fade.
 - Double-clicking the video toggles fullscreen. A single click plays or pauses after a brief delay so the double-click does not accidentally pause playback.
+- Play/pause and fullscreen show a brief center icon. Five/ten-second skips animate near the appropriate side of the video. Timeline seeking shows the destination time, while volume changes show a compact level indicator. Repeating an action restarts its feedback animation.
 
 ## Playback actions
 
-The dock has play/pause, ten-second skip buttons, elapsed and duration times, volume, speed, audio/subtitle tracks, more options, mini-player, and fullscreen. Click the duration to switch between total and remaining time. The more menu provides loop, fit/fill, canvas ratios, default-player setup, screenshot, external subtitles, and shortcut help. **F1** opens the shortcut list. The eye button is intentionally separate from fullscreen.
+The dock has play/pause, ten-second skip buttons, elapsed and duration times, volume, speed, audio/subtitle tracks, more options, mini-player, and fullscreen. Click the duration to switch between total and remaining time. The more menu provides loop, fit/fill, canvas ratios, default-player setup, screenshot, external subtitles, and shortcut help. **F1** opens the shortcut list. The lock button is separate from fullscreen.
+
+The shortcut list opens above the bottom controls like the other menus and scrolls in a short window. **Use system accent** in More options applies the desktop accent to interactive highlights; it is optional and persists between launches.
 
 ## Canvas preview and file associations
 

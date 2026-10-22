@@ -10,41 +10,50 @@ for tool in curl sha256sum dpkg apt-get; do
 done
 
 architecture="$(dpkg --print-architecture)"
-if [[ "$architecture" != amd64 ]]; then
+if [[ "$architecture" != amd64 && "$architecture" != arm64 ]]; then
     echo "There is no LinuxPlayer release package for $architecture yet." >&2
     exit 1
 fi
 
-release_url="https://github.com/huzaifaasim017/linuxplayer/releases/latest/download"
+release_url="https://github.com/teamkrope/linuxplayer/releases/latest/download"
 download_dir="$(mktemp -d)"
 trap 'rm -rf "$download_dir"' EXIT
 
-# Try the newest build first. apt's dependency solver decides which package
-# works on this system; distribution names and version numbers are not gates.
-for build in 26.04 24.04; do
-    asset="linuxplayer_ubuntu${build}_${architecture}.deb"
-    package="$download_dir/$asset"
-    if ! curl -fsSL --retry 3 "$release_url/$asset" -o "$package" ||
-       ! curl -fsSL --retry 3 "$release_url/$asset.sha256" -o "$package.sha256"; then
-        echo "Could not download the latest LinuxPlayer release." >&2
-        exit 1
-    fi
-    if ! (cd "$download_dir" && sha256sum --check --status "$asset.sha256"); then
-        echo "Checksum verification failed for $asset; installation stopped." >&2
-        exit 1
-    fi
+asset="linuxplayer_${architecture}.deb"
+package="$download_dir/$asset"
+if ! curl -fsSL --retry 3 "$release_url/$asset" -o "$package" ||
+   ! curl -fsSL --retry 3 "$release_url/$asset.sha256" -o "$package.sha256"; then
+    echo "Could not download the latest LinuxPlayer release." >&2
+    exit 1
+fi
+if ! (cd "$download_dir" && sha256sum --check --status "$asset.sha256"); then
+    echo "Checksum verification failed for $asset; installation stopped." >&2
+    exit 1
+fi
 
-    if apt-get -s --no-remove install "$package" >"$download_dir/apt-check.log" 2>&1; then
-        echo "Installing LinuxPlayer..."
-        if [[ "${EUID:-$(id -u)}" -eq 0 ]]; then
-            apt-get --no-remove install "$package"
-        else
-            sudo apt-get --no-remove install "$package"
-        fi
-        exit 0
+if apt-get -s --no-remove install "$package" >"$download_dir/apt-check.log" 2>&1; then
+    echo "Installing LinuxPlayer..."
+    if [[ "${EUID:-$(id -u)}" -eq 0 ]]; then
+        apt-get --no-remove install "$package"
+    else
+        sudo apt-get --no-remove install "$package"
     fi
-done
+    exit 0
+fi
+
+# Older packages could be left unpacked after a distribution upgrade changed
+# Qt's package names. APT refuses an upgrade while that old package is broken,
+# but dpkg can replace it with this release's compatible dependency alternatives.
+if [[ "$(dpkg-query -W -f='${Status}' linuxplayer 2>/dev/null || true)" == "install ok unpacked" ]]; then
+    echo "Replacing an incomplete LinuxPlayer installation..."
+    if [[ "${EUID:-$(id -u)}" -eq 0 ]]; then
+        dpkg -i "$package"
+    else
+        sudo dpkg -i "$package"
+    fi
+    exit 0
+fi
 
 echo "No current LinuxPlayer package fits this system's available dependencies." >&2
-echo "See https://github.com/huzaifaasim017/linuxplayer/blob/main/docs/BUILDING.md for other systems." >&2
+echo "See https://github.com/teamkrope/linuxplayer/blob/main/docs/BUILDING.md for other systems." >&2
 exit 1

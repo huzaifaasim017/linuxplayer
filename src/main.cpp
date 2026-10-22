@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "MpvItem.h"
 #include "DesktopIntegration.h"
+#include "ThemeAccent.h"
 #include "WindowOperations.h"
 
 #include <QGuiApplication>
 #include <QImage>
+#include <QIcon>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickWindow>
@@ -22,6 +24,7 @@ int main(int argc, char *argv[])
     app.setApplicationName(QStringLiteral("LinuxPlayer"));
     app.setOrganizationName(QStringLiteral("TeamKrope"));
     app.setDesktopFileName(QStringLiteral("io.github.teamkrope.LinuxPlayer"));
+    app.setWindowIcon(QIcon(QStringLiteral(":/assets/io.github.teamkrope.LinuxPlayer.png")));
 
     // libmpv requires the numeric C locale after Qt's application setup.
     std::setlocale(LC_NUMERIC, "C");
@@ -29,9 +32,11 @@ int main(int argc, char *argv[])
     qmlRegisterType<MpvItem>("LinuxPlayer", 1, 0, "MpvItem");
     WindowOperations windowOperations;
     DesktopIntegration desktopIntegration;
+    ThemeAccent themeAccent;
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty(QStringLiteral("windowOperations"), &windowOperations);
     engine.rootContext()->setContextProperty(QStringLiteral("desktopIntegration"), &desktopIntegration);
+    engine.rootContext()->setContextProperty(QStringLiteral("themeAccent"), &themeAccent);
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed,
                      &app, [] { QCoreApplication::exit(1); }, Qt::QueuedConnection);
     engine.load(QUrl(QStringLiteral("qrc:/qml/Main.qml")));
@@ -43,9 +48,11 @@ int main(int argc, char *argv[])
     const bool captureRestored = arguments.contains(QStringLiteral("--capture-restored"));
     const bool captureMini = captureRestored || arguments.contains(QStringLiteral("--capture-mini"));
     const bool captureHidden = arguments.contains(QStringLiteral("--capture-hidden"));
+    const bool captureOptions = arguments.contains(QStringLiteral("--capture-options"));
     const int captureIndex = arguments.indexOf(captureRestored ? QStringLiteral("--capture-restored")
                                                        : captureMini ? QStringLiteral("--capture-mini")
                                                        : captureHidden ? QStringLiteral("--capture-hidden")
+                                                       : captureOptions ? QStringLiteral("--capture-options")
                                                                      : QStringLiteral("--capture-ui"));
     if (captureIndex >= 0 && captureIndex + 1 < arguments.size()) {
         const QString path = arguments.at(captureIndex + 1);
@@ -68,6 +75,15 @@ int main(int argc, char *argv[])
         if (captureHidden) {
             QTimer::singleShot(1300, &app, [root = engine.rootObjects().first()] {
                 QMetaObject::invokeMethod(root, "toggleTools");
+            });
+        }
+        if (captureOptions) {
+            QTimer::singleShot(1500, &app, [root = engine.rootObjects().first()] {
+                QMetaObject::invokeMethod(root, "openOptionsForCapture");
+            });
+        } else if (!captureMini && !captureHidden) {
+            QTimer::singleShot(1500, &app, [root = engine.rootObjects().first()] {
+                QMetaObject::invokeMethod(root, "revealControls");
             });
         }
         QTimer::singleShot(captureRestored ? 4200 : captureMini ? 3500 : 2100,

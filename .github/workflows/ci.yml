@@ -2,18 +2,37 @@ name: Build and package
 
 on:
   push:
+    branches:
+      - main
   pull_request:
 
 permissions:
   contents: read
 
 jobs:
-  ubuntu-2404:
-    runs-on: ubuntu-24.04
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            arch: amd64
+          - runner: ubuntu-24.04-arm
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v7
       - name: Install build and validation tools
         run: |
+          for source in /etc/apt/apt-mirrors.txt /etc/apt/sources.list.d/ubuntu.sources; do
+            if [ -f "$source" ]; then
+              if [ "${{ matrix.arch }}" = amd64 ]; then
+                sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' "$source"
+              else
+                sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|https://ports.ubuntu.com/ubuntu-ports|g' "$source"
+              fi
+            fi
+          done
           sudo apt-get update
           sudo apt-get install -y build-essential cmake pkg-config qt6-base-dev qt6-declarative-dev libmpv-dev libgl1-mesa-dev libqt6svg6 desktop-file-utils appstream qml6-module-qtqml qml6-module-qtqml-workerscript qml6-module-qtquick qml6-module-qtquick-window qml6-module-qtquick-controls qml6-module-qtquick-templates qml6-module-qtquick-dialogs qml6-module-qtquick-layouts
       - name: Validate desktop metadata
@@ -24,16 +43,70 @@ jobs:
         run: bash tests/installer.sh
       - name: Configure and build
         run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DLINUXPLAYER_UBUNTU_VERSION=24.04
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build --parallel
           ctest --test-dir build --output-on-failure
       - name: Build and inspect Debian package
+        shell: bash
         run: |
+          set -euo pipefail
           cd build
           cpack -G DEB
-          dpkg-deb -I linuxplayer_*.deb
-          dpkg-deb -c linuxplayer_*.deb
-          dpkg-deb -f linuxplayer_*.deb Depends | grep -F 'qml6-module-qtquick-controls'
-          dpkg-deb -f linuxplayer_*.deb Depends | grep -F 'libmpv2'
-          dpkg-deb -f linuxplayer_*.deb Depends | grep -F 'libqt6svg6'
-          dpkg-deb -f linuxplayer_*.deb Depends | grep -F 'qml6-module-qtqml-workerscript'
+          package=$(find . -maxdepth 1 -name 'linuxplayer_*.deb' -print -quit)
+          test -n "$package"
+          test "$(dpkg-deb -f "$package" Architecture)" = "${{ matrix.arch }}"
+          dpkg-deb -f "$package" Depends | grep -F 'qml6-module-qtquick-controls'
+          dpkg-deb -f "$package" Depends | grep -F 'libmpv2'
+          dpkg-deb -f "$package" Depends | grep -F 'libqt6gui6t64 | libqt6gui6'
+          dpkg-deb -f "$package" Depends | grep -F 'libqt6opengl6t64 | libqt6opengl6'
+          dpkg-deb -f "$package" Depends | grep -F 'libqt6svg6'
+          dpkg-deb -f "$package" Depends | grep -F 'qml6-module-qtqml-workerscript'
+          mkdir -p ../dist
+          cp "$package" "../dist/linuxplayer_${{ matrix.arch }}.deb"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: package-${{ matrix.arch }}
+          path: dist/
+          if-no-files-found: error
+
+  validate-newer:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-26.04
+            arch: amd64
+          - runner: ubuntu-26.04-arm
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: package-${{ matrix.arch }}
+          path: dist/
+      - name: Install and launch on newer Ubuntu
+        timeout-minutes: 20
+        run: |
+          # Hosted runners can stall on the Azure APT mirror. Use the
+          # architecture's primary Ubuntu archive for install validation.
+          for source in /etc/apt/apt-mirrors.txt /etc/apt/sources.list.d/ubuntu.sources; do
+            if [ -f "$source" ]; then
+              if [ "${{ matrix.arch }}" = amd64 ]; then
+                sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' "$source"
+              else
+                sudo sed -i 's|http://azure.archive.ubuntu.com/ubuntu|https://ports.ubuntu.com/ubuntu-ports|g' "$source"
+              fi
+            fi
+          done
+          sudo apt-get update
+          sudo apt-get install -y "./dist/linuxplayer_${{ matrix.arch }}.deb"
+          QT_QPA_PLATFORM=offscreen linuxplayer --smoke-test
+
+  # Preserve the repository's required check name. It passes only after the
+  # architecture builds and newer-Ubuntu install checks have all succeeded.
+  ubuntu-2404:
+    needs: validate-newer
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "LinuxPlayer build and install matrix passed."

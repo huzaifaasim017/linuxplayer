@@ -15,18 +15,23 @@ ApplicationWindow {
     minimumHeight: miniMode ? 200 : 420
     visible: true
     title: player.mediaTitle.length ? player.mediaTitle + " · LinuxPlayer" : "LinuxPlayer"
-    color: "#090b10"
+    color: "#0d1721"
 
     readonly property bool hasMedia: player.sourceUrl.toString().length > 0
     property bool controlsShown: true
     property bool toolsHidden: false
-    property bool showRevealHint: true
+    property bool showRevealHint: false
     property bool draggingSeek: false
     property real seekPreview: 0
     property real rememberedVolume: 70
     property int rememberedSubtitleId: 0
     property bool showRemaining: false
     property bool busyVisible: false
+    property string playbackFeedbackIcon: "play"
+    property int seekFeedbackSeconds: 5
+    property bool seekFeedbackForward: true
+    property int volumeFeedbackLevel: 0
+    property string timelineFeedbackTime: "0:00"
     property string toastMessage: ""
     property bool miniMode: false
     property real canvasRatio: 0
@@ -37,9 +42,9 @@ ApplicationWindow {
     property bool restoreFullscreen: false
     readonly property bool overlayVisible: hasMedia && !miniMode && controlsShown && !toolsHidden
     readonly property bool miniOverlayVisible: hasMedia && miniMode && controlsShown && !toolsHidden
-    readonly property color ink: "#f8f8ff"
-    readonly property color mutedInk: "#b7b5c4"
-    readonly property color accent: "#b6a5ff"
+    readonly property color ink: "#edf5f5"
+    readonly property color mutedInk: "#a6bbc2"
+    readonly property color accent: themeAccent.enabled ? themeAccent.color : "#64d5c6"
     readonly property bool compact: width < 780
 
     function timeText(seconds) {
@@ -64,14 +69,23 @@ ApplicationWindow {
         controlsShown = !toolsHidden
         if (toolsHidden) {
             hideTimer.stop()
-            showRevealHint = true
-            hideRevealTimer.restart()
+            showRevealHint = false
+            hideRevealTimer.stop()
             trackPopup.close()
             speedPopup.close()
             settingsPopup.close()
             helpPopup.close()
             ratioPopup.close()
-        } else revealControls()
+        } else {
+            showRevealHint = false
+            revealControls()
+        }
+    }
+
+    // Used by the release screenshot command, which captures the real QML UI.
+    function openOptionsForCapture() {
+        revealControls()
+        settingsPopup.open()
     }
 
     function toggleMiniPlayer() {
@@ -116,7 +130,13 @@ ApplicationWindow {
             rememberedVolume = player.volume
             player.volume = 0
         } else player.volume = Math.max(1, rememberedVolume)
+        showVolumeFeedback()
         revealControls()
+    }
+
+    function showVolumeFeedback() {
+        volumeFeedbackLevel = Math.round(player.volume)
+        volumeFeedbackAnimation.restart()
     }
 
     function changeSpeed(amount) {
@@ -128,6 +148,7 @@ ApplicationWindow {
     function showToast(message) {
         toastMessage = message
         toastTimer.restart()
+        toastAnimation.restart()
     }
 
     function selectCanvas(label, ratio) {
@@ -143,6 +164,19 @@ ApplicationWindow {
         desktopIntegration.setAsDefaultVideoPlayer()
     }
 
+    function togglePlayback() {
+        if (!hasMedia) return
+        const willPlay = player.paused || player.ended
+        player.togglePause()
+        playbackFeedbackIcon = willPlay ? "play" : "pause"
+        playbackFeedbackAnimation.restart()
+        if (willPlay) {
+            hideTimer.stop()
+            controlsShown = false
+            showRevealHint = false
+        } else revealControls()
+    }
+
     Connections {
         target: desktopIntegration
         function onDefaultPlayerFinished(success, message) { window.showToast(message) }
@@ -151,28 +185,42 @@ ApplicationWindow {
     function toggleFullscreen() {
         if (miniMode) toggleMiniPlayer()
         restoreSizeTimer.stop()
-        if (visibility === Window.FullScreen) showNormal()
+        const leavingFullscreen = visibility === Window.FullScreen
+        if (leavingFullscreen) showNormal()
         else showFullScreen()
+        playbackFeedbackIcon = leavingFullscreen ? "minimize" : "fullscreen"
+        playbackFeedbackAnimation.restart()
         revealControls()
     }
 
     function adjustVolume(amount) {
         player.volume = Math.max(0, Math.min(100, player.volume + amount))
-        showToast("Volume " + Math.round(player.volume) + "%")
+        showVolumeFeedback()
+        revealControls()
+    }
+
+    function seekTo(position) {
+        if (!hasMedia || player.duration <= 0) return
+        const destination = Math.max(0, Math.min(player.duration, position))
+        player.seek(destination)
+        timelineFeedbackTime = timeText(destination)
+        timelineFeedbackAnimation.restart()
         revealControls()
     }
 
     function jump(amount) {
         if (!hasMedia || player.duration <= 0) return
         player.seek(Math.max(0, Math.min(player.duration, player.position + amount)))
-        showToast((amount > 0 ? "+" : "") + amount + " seconds")
+        seekFeedbackSeconds = Math.abs(amount)
+        seekFeedbackForward = amount > 0
+        if (seekFeedbackForward) forwardSeekFeedback.trigger()
+        else backSeekFeedback.trigger()
         revealControls()
     }
 
     function jumpToFraction(fraction) {
         if (!hasMedia || player.duration <= 0) return
-        player.seek(player.duration * fraction)
-        revealControls()
+        seekTo(player.duration * fraction)
     }
 
     function toggleCaptions() {
@@ -246,8 +294,7 @@ ApplicationWindow {
         interval: 230
         onTriggered: {
             if (window.hasMedia) {
-                player.togglePause()
-                window.revealControls()
+                window.togglePlayback()
             }
         }
     }
@@ -293,8 +340,8 @@ ApplicationWindow {
         closePolicy: Popup.NoAutoClose
         background: Rectangle {
             radius: 24
-            color: "#f0151c2b"
-            border.color: "#6888b1"
+            color: "#f0152833"
+            border.color: "#4a877f"
         }
         contentItem: ColumnLayout {
             spacing: 15
@@ -324,7 +371,7 @@ ApplicationWindow {
                         player.paused = false
                         resumePopup.close()
                     }
-                    background: Rectangle { radius: 12; color: startOverButton.hovered ? "#35435b" : "#263348" }
+                    background: Rectangle { radius: 12; color: startOverButton.hovered ? "#2b4b57" : "#213b49" }
                     contentItem: Text { text: startOverButton.text; color: window.ink; font.pixelSize: 13; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
                 }
                 Button {
@@ -337,8 +384,8 @@ ApplicationWindow {
                         player.paused = false
                         resumePopup.close()
                     }
-                    background: Rectangle { radius: 12; color: resumeButton.hovered ? "#9ebeff" : "#8eb4ff" }
-                    contentItem: Text { text: resumeButton.text; color: "#101c31"; font.pixelSize: 13; font.weight: Font.DemiBold; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
+                    background: Rectangle { radius: 12; color: resumeButton.hovered ? Qt.lighter(window.accent, 1.16) : window.accent }
+                    contentItem: Text { text: resumeButton.text; color: "#10201b"; font.pixelSize: 13; font.weight: Font.DemiBold; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
                 }
             }
         }
@@ -347,36 +394,45 @@ ApplicationWindow {
     Popup {
         id: helpPopup
         x: Math.max(16, window.width - width - 24)
-        y: 68
+        y: Math.max(16, controls.y - height - 12)
         width: 292
+        height: Math.min(430, Math.max(160, controls.y - headerBar.y - headerBar.height - 24))
         padding: 18
         focus: true
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-        background: Rectangle { radius: 20; color: "#ef111824"; border.color: "#5bffffff" }
-        contentItem: Column {
-            spacing: 8
-            Text { text: "Keyboard shortcuts"; color: window.ink; font.pixelSize: 16; font.weight: Font.DemiBold }
-            Text { text: "Ctrl+O   Open video"; color: window.mutedInk; font.pixelSize: 13 }
-            Text { text: "Space / K   Play or pause"; color: window.mutedInk; font.pixelSize: 13 }
-            Text { text: "← / →   Skip 5 seconds"; color: window.mutedInk; font.pixelSize: 13 }
-            Text { text: "J / L   Skip 10 seconds"; color: window.mutedInk; font.pixelSize: 13 }
-            Text { text: "↑ / ↓   Change volume"; color: window.mutedInk; font.pixelSize: 13 }
-            Text { text: "M   Mute  ·  F   Fullscreen"; color: window.mutedInk; font.pixelSize: 13 }
-            Text { text: "C   Toggle subtitles"; color: window.mutedInk; font.pixelSize: 13 }
-            Text { text: "H   Show or hide controls"; color: window.mutedInk; font.pixelSize: 13 }
-            Text { text: "I   Mini player"; color: window.mutedInk; font.pixelSize: 13 }
-            Text { text: "0–9   Jump through video"; color: window.mutedInk; font.pixelSize: 13 }
-            Text { text: "S   Save frame  ·  R   Loop video"; color: window.mutedInk; font.pixelSize: 13 }
-            Text { text: "[ / ]   Change speed"; color: window.mutedInk; font.pixelSize: 13 }
-            Text { text: "F1   Keyboard shortcuts"; color: window.mutedInk; font.pixelSize: 13 }
-            Text { text: "Esc   Leave fullscreen"; color: window.mutedInk; font.pixelSize: 13 }
+        background: Rectangle { radius: 20; color: "#ef152331"; border.color: "#5bffffff" }
+        contentItem: Flickable {
+            contentWidth: width
+            contentHeight: helpColumn.implicitHeight
+            clip: true
+            ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+            Column {
+                id: helpColumn
+                width: parent.width
+                spacing: 8
+                Text { text: "Keyboard shortcuts"; color: window.ink; font.pixelSize: 16; font.weight: Font.DemiBold }
+                Text { text: "Ctrl+O   Open video"; color: window.mutedInk; font.pixelSize: 13 }
+                Text { text: "Space / K   Play or pause"; color: window.mutedInk; font.pixelSize: 13 }
+                Text { text: "← / →   Skip 5 seconds"; color: window.mutedInk; font.pixelSize: 13 }
+                Text { text: "J / L   Skip 10 seconds"; color: window.mutedInk; font.pixelSize: 13 }
+                Text { text: "↑ / ↓   Change volume"; color: window.mutedInk; font.pixelSize: 13 }
+                Text { text: "M   Mute  ·  F   Fullscreen"; color: window.mutedInk; font.pixelSize: 13 }
+                Text { text: "C   Toggle subtitles"; color: window.mutedInk; font.pixelSize: 13 }
+                Text { text: "H   Show or hide controls"; color: window.mutedInk; font.pixelSize: 13 }
+                Text { text: "I   Mini player"; color: window.mutedInk; font.pixelSize: 13 }
+                Text { text: "0–9   Jump through video"; color: window.mutedInk; font.pixelSize: 13 }
+                Text { text: "S   Save frame  ·  R   Loop video"; color: window.mutedInk; font.pixelSize: 13 }
+                Text { text: "[ / ]   Change speed"; color: window.mutedInk; font.pixelSize: 13 }
+                Text { text: "F1   Keyboard shortcuts"; color: window.mutedInk; font.pixelSize: 13 }
+                Text { text: "Esc   Leave fullscreen"; color: window.mutedInk; font.pixelSize: 13 }
+            }
         }
     }
 
     Shortcut { sequences: [StandardKey.Open]; onActivated: videoDialog.open() }
     Shortcut { sequence: "F1"; onActivated: helpPopup.open() }
-    Shortcut { sequence: "Space"; enabled: window.hasMedia; onActivated: { player.togglePause(); window.revealControls() } }
-    Shortcut { sequence: "K"; enabled: window.hasMedia; onActivated: { player.togglePause(); window.revealControls() } }
+    Shortcut { sequence: "Space"; enabled: window.hasMedia; onActivated: window.togglePlayback() }
+    Shortcut { sequence: "K"; enabled: window.hasMedia; onActivated: window.togglePlayback() }
     Shortcut { sequence: "Left"; onActivated: window.jump(-5) }
     Shortcut { sequence: "Right"; onActivated: window.jump(5) }
     Shortcut { sequence: "J"; onActivated: window.jump(-10) }
@@ -384,7 +440,7 @@ ApplicationWindow {
     Shortcut { sequence: "Up"; onActivated: window.adjustVolume(5) }
     Shortcut { sequence: "Down"; onActivated: window.adjustVolume(-5) }
     Shortcut { sequence: "F"; onActivated: window.toggleFullscreen() }
-    Shortcut { sequence: "Escape"; enabled: window.visibility === Window.FullScreen; onActivated: window.showNormal() }
+    Shortcut { sequence: "Escape"; enabled: window.visibility === Window.FullScreen; onActivated: window.toggleFullscreen() }
     Shortcut { sequence: "M"; onActivated: window.toggleMute() }
     Shortcut { sequence: "C"; enabled: window.hasMedia; onActivated: window.toggleCaptions() }
     Shortcut { sequence: "H"; enabled: window.hasMedia; onActivated: window.toggleTools() }
@@ -394,8 +450,8 @@ ApplicationWindow {
     Shortcut { sequence: "R"; enabled: window.hasMedia; onActivated: { player.looping = !player.looping; window.showToast(player.looping ? "Loop on" : "Loop off") } }
     Shortcut { sequence: "["; enabled: window.hasMedia; onActivated: window.changeSpeed(-0.25) }
     Shortcut { sequence: "]"; enabled: window.hasMedia; onActivated: window.changeSpeed(0.25) }
-    Shortcut { sequence: "Home"; enabled: window.hasMedia; onActivated: player.seek(0) }
-    Shortcut { sequence: "End"; enabled: window.hasMedia && player.duration > 0; onActivated: player.seek(Math.max(0, player.duration - 1)) }
+    Shortcut { sequence: "Home"; enabled: window.hasMedia; onActivated: window.seekTo(0) }
+    Shortcut { sequence: "End"; enabled: window.hasMedia && player.duration > 0; onActivated: window.seekTo(Math.max(0, player.duration - 1)) }
     Shortcut { sequence: "0"; enabled: window.hasMedia; onActivated: window.jumpToFraction(0) }
     Shortcut { sequence: "1"; enabled: window.hasMedia; onActivated: window.jumpToFraction(0.1) }
     Shortcut { sequence: "2"; enabled: window.hasMedia; onActivated: window.jumpToFraction(0.2) }
@@ -423,7 +479,15 @@ ApplicationWindow {
             resumePopup.open()
             window.revealControls()
         }
-        onPausedChanged: window.revealControls()
+        onPausedChanged: {
+            if (player.paused && !player.ended) window.revealControls()
+        }
+        onLoadingChanged: {
+            if (!player.loading && window.hasMedia && !player.paused && !player.ended) {
+                window.controlsShown = false
+                window.showRevealHint = false
+            }
+        }
         onEndedChanged: {
             if (player.ended) {
                 hideTimer.stop()
@@ -473,7 +537,7 @@ ApplicationWindow {
         width: 64
         height: 64
         radius: 20
-        color: "#db111824"
+        color: "#db152331"
         border.color: "#57ffffff"
         visible: window.hasMedia && !player.ended && window.busyVisible
         Accessible.name: "Loading video"
@@ -495,10 +559,223 @@ ApplicationWindow {
         }
     }
 
+    Item {
+        id: playbackFeedback
+        anchors.centerIn: parent
+        width: 92
+        height: 92
+        opacity: 0
+        scale: 0.72
+        visible: opacity > 0
+        z: 9
+        Rectangle {
+            anchors.centerIn: parent
+            width: 92; height: 92; radius: 46
+            color: "#2364d5c6"
+        }
+        Rectangle {
+            anchors.centerIn: parent
+            width: 74; height: 74; radius: 37
+            color: "#ed152b36"
+            border.color: Qt.rgba(window.accent.r, window.accent.g, window.accent.b, 0.54)
+            border.width: 1
+        }
+        Image {
+            anchors.centerIn: parent
+            width: 34; height: 34
+            source: "icons/" + window.playbackFeedbackIcon + ".svg"
+            sourceSize: Qt.size(Math.ceil(34 * Screen.devicePixelRatio), Math.ceil(34 * Screen.devicePixelRatio))
+            fillMode: Image.PreserveAspectFit
+        }
+        SequentialAnimation {
+            id: playbackFeedbackAnimation
+            PropertyAction { target: playbackFeedback; property: "opacity"; value: 0 }
+            PropertyAction { target: playbackFeedback; property: "scale"; value: 0.72 }
+            ParallelAnimation {
+                NumberAnimation { target: playbackFeedback; property: "opacity"; from: 0; to: 1; duration: 110 }
+                NumberAnimation { target: playbackFeedback; property: "scale"; from: 0.72; to: 1.04; duration: 210; easing.type: Easing.OutBack }
+            }
+            PauseAnimation { duration: 85 }
+            ParallelAnimation {
+                NumberAnimation { target: playbackFeedback; property: "opacity"; from: 1; to: 0; duration: 230; easing.type: Easing.InQuad }
+                NumberAnimation { target: playbackFeedback; property: "scale"; from: 1.04; to: 1.18; duration: 230; easing.type: Easing.OutQuad }
+            }
+        }
+    }
+
+    component SeekFeedback: Item {
+        id: feedback
+        property bool forward: false
+        property int seconds: 5
+        function trigger() { motion.restart() }
+        width: 100
+        height: 100
+        opacity: 0
+        scale: 0.78
+        visible: opacity > 0
+        z: 9
+
+        Rectangle {
+            anchors.fill: parent
+            radius: width / 2
+            color: "#ca152b36"
+            border.color: Qt.rgba(window.accent.r, window.accent.g, window.accent.b, 0.6)
+            border.width: 1
+        }
+        Column {
+            anchors.centerIn: parent
+            spacing: 1
+            Image {
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: 30; height: 30
+                source: "icons/" + (feedback.forward ? "forward" : "rewind") + ".svg"
+                sourceSize: Qt.size(Math.ceil(30 * Screen.devicePixelRatio), Math.ceil(30 * Screen.devicePixelRatio))
+            }
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: feedback.seconds + "s"
+                color: window.ink
+                font.pixelSize: 15
+                font.weight: Font.DemiBold
+            }
+        }
+        SequentialAnimation {
+            id: motion
+            PropertyAction { target: feedback; property: "opacity"; value: 0 }
+            PropertyAction { target: feedback; property: "scale"; value: 0.78 }
+            ParallelAnimation {
+                NumberAnimation { target: feedback; property: "opacity"; from: 0; to: 1; duration: 100 }
+                NumberAnimation { target: feedback; property: "scale"; from: 0.78; to: 1.06; duration: 230; easing.type: Easing.OutBack }
+            }
+            PauseAnimation { duration: 170 }
+            ParallelAnimation {
+                NumberAnimation { target: feedback; property: "opacity"; from: 1; to: 0; duration: 220 }
+                NumberAnimation { target: feedback; property: "scale"; from: 1.06; to: 1.2; duration: 220 }
+            }
+        }
+    }
+
+    SeekFeedback {
+        id: backSeekFeedback
+        forward: false
+        seconds: window.seekFeedbackSeconds
+        x: Math.max(24, window.width * 0.22 - width / 2)
+        y: (window.height - height) / 2
+    }
+
+    SeekFeedback {
+        id: forwardSeekFeedback
+        forward: true
+        seconds: window.seekFeedbackSeconds
+        x: Math.min(window.width - width - 24, window.width * 0.78 - width / 2)
+        y: (window.height - height) / 2
+    }
+
+    Item {
+        id: volumeFeedback
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.top
+        anchors.topMargin: window.miniMode ? 18 : 76
+        width: 180
+        height: 64
+        opacity: 0
+        scale: 0.9
+        visible: opacity > 0
+        z: 9
+        Rectangle {
+            anchors.fill: parent
+            radius: 19
+            color: "#ed152b36"
+            border.color: Qt.rgba(window.accent.r, window.accent.g, window.accent.b, 0.44)
+        }
+        Row {
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.topMargin: 12
+            anchors.leftMargin: 17
+            spacing: 9
+            Image {
+                width: 20; height: 20
+                source: "icons/" + (window.volumeFeedbackLevel === 0 ? "mute" : "volume") + ".svg"
+                sourceSize: Qt.size(Math.ceil(20 * Screen.devicePixelRatio), Math.ceil(20 * Screen.devicePixelRatio))
+            }
+            Text {
+                text: window.volumeFeedbackLevel + "%"
+                color: window.ink
+                font.pixelSize: 14
+                font.weight: Font.DemiBold
+            }
+        }
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.margins: 17
+            anchors.bottomMargin: 14
+            height: 4
+            radius: 2
+            color: "#64789198"
+            Rectangle {
+                width: parent.width * window.volumeFeedbackLevel / 100
+                height: parent.height
+                radius: parent.radius
+                color: window.accent
+                Behavior on width { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+            }
+        }
+        SequentialAnimation {
+            id: volumeFeedbackAnimation
+            PropertyAction { target: volumeFeedback; property: "opacity"; value: 0 }
+            PropertyAction { target: volumeFeedback; property: "scale"; value: 0.9 }
+            ParallelAnimation {
+                NumberAnimation { target: volumeFeedback; property: "opacity"; from: 0; to: 1; duration: 100 }
+                NumberAnimation { target: volumeFeedback; property: "scale"; from: 0.9; to: 1; duration: 180; easing.type: Easing.OutCubic }
+            }
+            PauseAnimation { duration: 460 }
+            NumberAnimation { target: volumeFeedback; property: "opacity"; from: 1; to: 0; duration: 220 }
+        }
+    }
+
+    Rectangle {
+        id: timelineFeedback
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: window.miniMode ? 107 : 138
+        width: timelineFeedbackLabel.implicitWidth + 36
+        height: 38
+        radius: 13
+        color: "#ed152b36"
+        border.color: Qt.rgba(window.accent.r, window.accent.g, window.accent.b, 0.45)
+        opacity: 0
+        scale: 0.88
+        visible: opacity > 0
+        z: 9
+        Text {
+            id: timelineFeedbackLabel
+            anchors.centerIn: parent
+            text: window.timelineFeedbackTime
+            color: window.ink
+            font.pixelSize: 14
+            font.family: "monospace"
+            font.weight: Font.DemiBold
+        }
+        SequentialAnimation {
+            id: timelineFeedbackAnimation
+            PropertyAction { target: timelineFeedback; property: "opacity"; value: 0 }
+            PropertyAction { target: timelineFeedback; property: "scale"; value: 0.88 }
+            ParallelAnimation {
+                NumberAnimation { target: timelineFeedback; property: "opacity"; from: 0; to: 1; duration: 100 }
+                NumberAnimation { target: timelineFeedback; property: "scale"; from: 0.88; to: 1; duration: 180; easing.type: Easing.OutCubic }
+            }
+            PauseAnimation { duration: 360 }
+            NumberAnimation { target: timelineFeedback; property: "opacity"; from: 1; to: 0; duration: 200 }
+        }
+    }
+
     Rectangle {
         anchors.fill: parent
         visible: fileDrop.containsDrag
-        color: "#b5090d15"
+        color: "#b50d1721"
         border.color: window.accent
         border.width: 3
         z: 10
@@ -518,8 +795,8 @@ ApplicationWindow {
         Rectangle {
             anchors.fill: parent
             gradient: Gradient {
-                GradientStop { position: 0; color: "#101722" }
-                GradientStop { position: 1; color: "#070a10" }
+                GradientStop { position: 0; color: "#152331" }
+                GradientStop { position: 1; color: "#0d1721" }
             }
         }
         ColumnLayout {
@@ -532,14 +809,15 @@ ApplicationWindow {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.bottomMargin: 24
                 radius: 22
-                color: "#4a435f"
-                border.color: "#80719f"
+                color: "#e8f4f3"
+                border.color: "#b8d8d7"
                 Image {
                     anchors.centerIn: parent
-                    source: "icons/play.svg"
-                    sourceSize.width: Math.ceil(27 * Screen.devicePixelRatio)
-                    sourceSize.height: Math.ceil(27 * Screen.devicePixelRatio)
-                    width: 27; height: 27
+                    source: "../assets/io.github.teamkrope.LinuxPlayer.png"
+                    sourceSize.width: Math.ceil(56 * Screen.devicePixelRatio)
+                    sourceSize.height: Math.ceil(56 * Screen.devicePixelRatio)
+                    width: 56; height: 56
+                    fillMode: Image.PreserveAspectFit
                 }
             }
             Text {
@@ -561,12 +839,12 @@ ApplicationWindow {
                 onClicked: videoDialog.open()
                 background: Rectangle {
                     radius: 14
-                    color: openVideoButton.down ? "#d7cbff" : openVideoButton.hovered ? "#c6b8ff" : "#b6a5ff"
+                    color: openVideoButton.down ? Qt.lighter(window.accent, 1.16) : openVideoButton.hovered ? Qt.lighter(window.accent, 1.08) : window.accent
                     Behavior on color { ColorAnimation { duration: 150 } }
                 }
                 contentItem: Text {
                     text: openVideoButton.text
-                    color: "#181524"
+                    color: "#10201b"
                     font.pixelSize: 14
                     font.weight: Font.DemiBold
                     horizontalAlignment: Text.AlignHCenter
@@ -576,10 +854,11 @@ ApplicationWindow {
             Button {
                 id: emptyDefaultButton
                 text: "Make default video player"
+                visible: desktopIntegration.defaultStatusReady && !desktopIntegration.defaultVideoPlayer
                 Layout.alignment: Qt.AlignHCenter
                 Layout.topMargin: 10
                 onClicked: window.makeDefaultPlayer()
-                background: Rectangle { radius: 10; color: emptyDefaultButton.hovered ? "#273247" : "transparent" }
+                background: Rectangle { radius: 10; color: emptyDefaultButton.hovered ? "#1a2b39" : "transparent" }
                 contentItem: Text { text: emptyDefaultButton.text; color: window.mutedInk; font.pixelSize: 12; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter }
             }
         }
@@ -594,8 +873,8 @@ ApplicationWindow {
         visible: window.hasMedia && opacity > 0.01
         opacity: window.overlayVisible ? 1 : 0
         gradient: Gradient {
-            GradientStop { position: 0; color: "#b900050c" }
-            GradientStop { position: 1; color: "#0000050c" }
+            GradientStop { position: 0; color: "#b90d1721" }
+            GradientStop { position: 1; color: "#000d1721" }
         }
         Behavior on opacity { NumberAnimation { duration: 210 } }
     }
@@ -636,6 +915,7 @@ ApplicationWindow {
                 Layout.fillWidth: true
             }
             IconButton {
+                accentColor: window.accent
                 iconName: "open"
                 Accessible.name: "Open another video"
                 ToolTip.visible: hovered
@@ -643,30 +923,32 @@ ApplicationWindow {
                 onClicked: videoDialog.open()
             }
             IconButton {
-                iconName: "eye-off"
-                Accessible.name: "Hide controls"
+                accentColor: window.accent
+                iconName: "lock"
+                Accessible.name: "Lock controls"
                 ToolTip.visible: hovered
-                ToolTip.text: "Hide all controls (H)"
+                ToolTip.text: "Lock controls (H)"
                 onClicked: window.toggleTools()
             }
         }
     }
 
     IconButton {
+        accentColor: window.accent
         id: revealButton
-        visible: window.hasMedia && !window.overlayVisible && !window.miniOverlayVisible && window.showRevealHint
+        visible: window.hasMedia && window.toolsHidden && window.showRevealHint && !window.miniMode
         anchors.top: parent.top
         anchors.right: parent.right
         anchors.topMargin: 20
         anchors.rightMargin: 22
         width: 44
         height: 44
-        iconName: "eye"
-        Accessible.name: "Show controls"
+        iconName: "lock-open"
+        Accessible.name: "Unlock controls"
         ToolTip.visible: hovered
-        ToolTip.text: "Show controls (H)"
-        onClicked: window.toolsHidden ? window.toggleTools() : window.revealControls()
-        background: Rectangle { radius: 14; color: revealButton.hovered ? "#d92a3040" : "#bd131721"; border.color: "#55ffffff" }
+        ToolTip.text: "Unlock controls (H)"
+        onClicked: window.toggleTools()
+        background: Rectangle { radius: 14; color: revealButton.hovered ? "#d9284852" : "#d0152833"; border.color: "#55ffffff" }
     }
 
     Rectangle {
@@ -677,8 +959,8 @@ ApplicationWindow {
         visible: window.hasMedia && opacity > 0.01
         opacity: window.overlayVisible ? 1 : 0
         gradient: Gradient {
-            GradientStop { position: 0; color: "#0000050c" }
-            GradientStop { position: 1; color: "#ca00050c" }
+            GradientStop { position: 0; color: "#000d1721" }
+            GradientStop { position: 1; color: "#ca0d1721" }
         }
         Behavior on opacity { NumberAnimation { duration: 210 } }
     }
@@ -693,7 +975,7 @@ ApplicationWindow {
         anchors.bottomMargin: window.compact ? 10 : 16
         height: 100
         radius: 18
-        color: "#ba101119"
+        color: "#d0152833"
         border.color: "#38ffffff"
         border.width: 1
         visible: window.hasMedia && opacity > 0.01
@@ -743,8 +1025,7 @@ ApplicationWindow {
                         } else if (window.draggingSeek) {
                             const destination = window.seekPreview
                             window.draggingSeek = false
-                            player.seek(destination)
-                            window.revealControls()
+                            window.seekTo(destination)
                         }
                     }
                     onMoved: {
@@ -757,7 +1038,7 @@ ApplicationWindow {
                         width: seekSlider.availableWidth
                         height: seekSlider.hovered || seekSlider.pressed ? 6 : 4
                         radius: height / 2
-                        color: "#65ffffff"
+                        color: "#64819aa3"
                         Behavior on height { NumberAnimation { duration: 140 } }
                         Rectangle {
                             width: parent.width * seekSlider.visualPosition
@@ -772,8 +1053,8 @@ ApplicationWindow {
                         width: seekSlider.hovered || seekSlider.pressed ? 15 : 11
                         height: width
                         radius: width / 2
-                        color: "#f8fbff"
-                        border.color: "#89b5ff"
+                        color: "#edf5f5"
+                        border.color: window.accent
                         border.width: 1
                         Behavior on width { NumberAnimation { duration: 140 } }
                     }
@@ -808,6 +1089,7 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 spacing: window.compact ? 2 : 7
                 IconButton {
+                    accentColor: window.accent
                     iconName: player.paused || player.ended ? "play" : "pause"
                     iconSize: 22
                     prominent: true
@@ -816,9 +1098,10 @@ ApplicationWindow {
                     Accessible.name: player.paused || player.ended ? "Play" : "Pause"
                     ToolTip.visible: hovered
                     ToolTip.text: player.ended ? "Replay (Space)" : player.paused ? "Play (Space)" : "Pause (Space)"
-                    onClicked: { player.togglePause(); window.revealControls() }
+                    onClicked: window.togglePlayback()
                 }
                 IconButton {
+                    accentColor: window.accent
                     iconName: "rewind"
                     Accessible.name: "Back 10 seconds"
                     ToolTip.visible: hovered
@@ -826,6 +1109,7 @@ ApplicationWindow {
                     onClicked: window.jump(-10)
                 }
                 IconButton {
+                    accentColor: window.accent
                     iconName: "forward"
                     Accessible.name: "Forward 10 seconds"
                     ToolTip.visible: hovered
@@ -834,6 +1118,7 @@ ApplicationWindow {
                 }
                 Item { Layout.fillWidth: true }
                 IconButton {
+                    accentColor: window.accent
                     iconName: player.volume <= 0 ? "mute" : "volume"
                     Accessible.name: player.volume <= 0 ? "Unmute" : "Mute"
                     ToolTip.visible: hovered
@@ -850,14 +1135,14 @@ ApplicationWindow {
                     value: player.volume
                     hoverEnabled: true
                     Accessible.name: "Volume"
-                    onMoved: { player.volume = value; window.revealControls() }
+                    onMoved: { player.volume = value; window.showVolumeFeedback(); window.revealControls() }
                     background: Rectangle {
                         x: volumeSlider.leftPadding
                         y: volumeSlider.topPadding + volumeSlider.availableHeight / 2 - height / 2
                         width: volumeSlider.availableWidth
                         height: 4
                         radius: 2
-                        color: "#65ffffff"
+                        color: "#64819aa3"
                         Rectangle { width: parent.width * volumeSlider.visualPosition; height: parent.height; radius: 2; color: window.ink }
                     }
                     handle: Rectangle {
@@ -887,6 +1172,7 @@ ApplicationWindow {
                     }
                 }
                 IconButton {
+                    accentColor: window.accent
                     iconName: "captions"
                     selected: player.subtitleTrackId > 0
                     Accessible.name: "Audio and subtitles"
@@ -895,6 +1181,7 @@ ApplicationWindow {
                     onClicked: { speedPopup.close(); settingsPopup.close(); trackPopup.open(); window.revealControls() }
                 }
                 IconButton {
+                    accentColor: window.accent
                     iconName: "settings"
                     Accessible.name: "More playback options"
                     ToolTip.visible: hovered
@@ -902,6 +1189,7 @@ ApplicationWindow {
                     onClicked: { speedPopup.close(); trackPopup.close(); settingsPopup.open(); window.revealControls() }
                 }
                 IconButton {
+                    accentColor: window.accent
                     iconName: "picture-in-picture"
                     Accessible.name: "Mini player"
                     ToolTip.visible: hovered
@@ -909,6 +1197,7 @@ ApplicationWindow {
                     onClicked: window.toggleMiniPlayer()
                 }
                 IconButton {
+                    accentColor: window.accent
                     iconName: window.visibility === Window.FullScreen ? "minimize" : "fullscreen"
                     Accessible.name: window.visibility === Window.FullScreen ? "Leave fullscreen" : "Fullscreen"
                     ToolTip.visible: hovered
@@ -960,6 +1249,7 @@ ApplicationWindow {
             elide: Text.ElideMiddle
         }
         IconButton {
+            accentColor: window.accent
             id: restoreMiniButton
             anchors.top: parent.top
             anchors.right: parent.right
@@ -1006,8 +1296,7 @@ ApplicationWindow {
                     } else if (window.draggingSeek) {
                         const destination = window.seekPreview
                         window.draggingSeek = false
-                        player.seek(destination)
-                        window.revealControls()
+                        window.seekTo(destination)
                     }
                 }
                 onMoved: { window.seekPreview = value; window.revealControls() }
@@ -1035,13 +1324,15 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 spacing: 2
                 IconButton {
+                    accentColor: window.accent
                     iconName: player.paused || player.ended ? "play" : "pause"
                     Accessible.name: player.paused || player.ended ? "Play" : "Pause"
                     ToolTip.visible: hovered
                     ToolTip.text: player.ended ? "Replay" : player.paused ? "Play" : "Pause"
-                    onClicked: player.togglePause()
+                    onClicked: window.togglePlayback()
                 }
                 IconButton {
+                    accentColor: window.accent
                     iconName: "rewind"
                     Accessible.name: "Back 10 seconds"
                     ToolTip.visible: hovered
@@ -1049,6 +1340,7 @@ ApplicationWindow {
                     onClicked: window.jump(-10)
                 }
                 IconButton {
+                    accentColor: window.accent
                     iconName: "forward"
                     Accessible.name: "Forward 10 seconds"
                     ToolTip.visible: hovered
@@ -1097,7 +1389,7 @@ ApplicationWindow {
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
         onOpened: window.revealControls()
         onClosed: window.revealControls()
-        background: Rectangle { radius: 20; color: "#ef111824"; border.color: "#5bffffff"; border.width: 1 }
+        background: Rectangle { radius: 20; color: "#ef152331"; border.color: "#5bffffff"; border.width: 1 }
         contentItem: Flickable {
             contentWidth: width
             contentHeight: trackColumn.implicitHeight
@@ -1116,7 +1408,7 @@ ApplicationWindow {
                         width: trackColumn.width; height: 36
                         text: (modelData.id === player.audioTrackId ? "✓  " : "     ") + (modelData.title || modelData.language || "Track " + (index + 1))
                         onClicked: { player.audioTrackId = modelData.id; trackPopup.close() }
-                        background: Rectangle { radius: 10; color: parent.hovered ? "#334f76" : "transparent" }
+                        background: Rectangle { radius: 10; color: parent.hovered ? "#28545a" : "transparent" }
                         contentItem: Text { text: parent.text; color: window.ink; font.pixelSize: 13; verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight }
                     }
                 }
@@ -1125,7 +1417,7 @@ ApplicationWindow {
                     width: trackColumn.width; height: 36
                     text: (player.subtitleTrackId <= 0 ? "✓  " : "     ") + "Off"
                     onClicked: { player.subtitleTrackId = 0; trackPopup.close() }
-                    background: Rectangle { radius: 10; color: parent.hovered ? "#334f76" : "transparent" }
+                    background: Rectangle { radius: 10; color: parent.hovered ? "#28545a" : "transparent" }
                     contentItem: Text { text: parent.text; color: window.ink; font.pixelSize: 13; verticalAlignment: Text.AlignVCenter }
                 }
                 Repeater {
@@ -1136,7 +1428,7 @@ ApplicationWindow {
                         width: trackColumn.width; height: 36
                         text: (modelData.id === player.subtitleTrackId ? "✓  " : "     ") + (modelData.title || modelData.language || "Track " + (index + 1))
                         onClicked: { player.subtitleTrackId = modelData.id; trackPopup.close() }
-                        background: Rectangle { radius: 10; color: parent.hovered ? "#334f76" : "transparent" }
+                        background: Rectangle { radius: 10; color: parent.hovered ? "#28545a" : "transparent" }
                         contentItem: Text { text: parent.text; color: window.ink; font.pixelSize: 13; verticalAlignment: Text.AlignVCenter; elide: Text.ElideRight }
                     }
                 }
@@ -1144,7 +1436,7 @@ ApplicationWindow {
                     width: trackColumn.width; height: 38
                     text: "+  Load subtitle file…"
                     onClicked: { trackPopup.close(); subtitleDialog.open() }
-                    background: Rectangle { radius: 10; color: parent.hovered ? "#334f76" : "transparent" }
+                    background: Rectangle { radius: 10; color: parent.hovered ? "#28545a" : "transparent" }
                     contentItem: Text { text: parent.text; color: window.accent; font.pixelSize: 13; verticalAlignment: Text.AlignVCenter }
                 }
             }
@@ -1162,7 +1454,7 @@ ApplicationWindow {
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
         onOpened: window.revealControls()
         onClosed: window.revealControls()
-        background: Rectangle { radius: 20; color: "#ef111824"; border.color: "#5bffffff"; border.width: 1 }
+        background: Rectangle { radius: 20; color: "#ef152331"; border.color: "#5bffffff"; border.width: 1 }
         contentItem: Flickable {
             contentWidth: width
             contentHeight: speedColumn.implicitHeight
@@ -1180,7 +1472,7 @@ ApplicationWindow {
                         width: speedColumn.width; height: 31
                         text: modelData === 1 ? "Normal" : modelData + "×"
                         onClicked: { player.speed = modelData; speedPopup.close(); window.revealControls() }
-                        background: Rectangle { radius: 10; color: parent.hovered ? "#334f76" : "transparent" }
+                        background: Rectangle { radius: 10; color: parent.hovered ? "#28545a" : "transparent" }
                         contentItem: Text { text: parent.text; color: player.speed === modelData ? window.accent : window.ink; font.pixelSize: 13; verticalAlignment: Text.AlignVCenter; leftPadding: 9 }
                     }
                 }
@@ -1198,7 +1490,7 @@ ApplicationWindow {
         focus: true
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
         onOpened: window.revealControls()
-        background: Rectangle { radius: 20; color: "#ef111824"; border.color: "#5bffffff" }
+        background: Rectangle { radius: 20; color: "#ef152331"; border.color: "#5bffffff" }
         contentItem: Flickable {
             contentWidth: width
             contentHeight: ratioColumn.implicitHeight
@@ -1226,7 +1518,7 @@ ApplicationWindow {
                         width: ratioColumn.width
                         height: 43
                         onClicked: window.selectCanvas(modelData.label, modelData.ratio)
-                        background: Rectangle { radius: 11; color: parent.hovered ? "#334f76" : window.canvasLabel === modelData.label ? "#2d4364" : "transparent" }
+                        background: Rectangle { radius: 11; color: parent.hovered ? "#28545a" : window.canvasLabel === modelData.label ? "#20545b" : "transparent" }
                         contentItem: RowLayout {
                             spacing: 8
                             Text { text: modelData.label; color: window.canvasLabel === modelData.label ? window.accent : window.ink; font.pixelSize: 13; font.weight: Font.DemiBold; Layout.preferredWidth: 70 }
@@ -1234,7 +1526,7 @@ ApplicationWindow {
                         }
                     }
                 }
-                Rectangle { width: ratioColumn.width - 4; height: 1; color: "#30ffffff" }
+                Rectangle { width: ratioColumn.width - 4; height: 1; color: "#60344955" }
                 RowLayout {
                     width: ratioColumn.width
                     spacing: 7
@@ -1257,13 +1549,18 @@ ApplicationWindow {
         x: Math.max(16, window.width - width - 24)
         y: Math.max(16, controls.y - height - 12)
         width: 272
-        height: Math.min(390, Math.max(160, controls.y - headerBar.y - headerBar.height - 24))
+        height: Math.min(390, settingsColumn.implicitHeight + padding * 2,
+                         Math.max(160, controls.y - headerBar.y - headerBar.height - 24))
         padding: 13
         focus: true
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-        onOpened: window.revealControls()
+        onOpened: {
+            desktopIntegration.refreshDefaultStatus()
+            themeAccent.refresh()
+            window.revealControls()
+        }
         onClosed: window.revealControls()
-        background: Rectangle { radius: 20; color: "#ef111824"; border.color: "#5bffffff"; border.width: 1 }
+        background: Rectangle { radius: 20; color: "#ef152331"; border.color: "#5bffffff"; border.width: 1 }
         contentItem: Flickable {
             contentWidth: width
             contentHeight: settingsColumn.implicitHeight
@@ -1280,7 +1577,7 @@ ApplicationWindow {
                     text: "Loop video"
                     hoverEnabled: true
                     onClicked: { player.looping = !player.looping; window.showToast(player.looping ? "Loop on" : "Loop off") }
-                    background: Rectangle { radius: 11; color: loopOption.hovered ? "#334f76" : player.looping ? "#2d4364" : "transparent" }
+                    background: Rectangle { radius: 11; color: loopOption.hovered ? "#28545a" : player.looping ? "#20545b" : "transparent" }
                     contentItem: RowLayout {
                         Image { source: "icons/repeat.svg"; sourceSize: Qt.size(Math.ceil(18 * Screen.devicePixelRatio), Math.ceil(18 * Screen.devicePixelRatio)); Layout.preferredWidth: 18; Layout.preferredHeight: 18; fillMode: Image.PreserveAspectFit }
                         Text { text: loopOption.text; color: window.ink; font.pixelSize: 13; Layout.fillWidth: true }
@@ -1293,7 +1590,7 @@ ApplicationWindow {
                     text: "Fill video canvas"
                     hoverEnabled: true
                     onClicked: { player.videoFill = !player.videoFill; window.showToast(player.videoFill ? "Fill screen" : "Fit video") }
-                    background: Rectangle { radius: 11; color: fillOption.hovered ? "#334f76" : player.videoFill ? "#2d4364" : "transparent" }
+                    background: Rectangle { radius: 11; color: fillOption.hovered ? "#28545a" : player.videoFill ? "#20545b" : "transparent" }
                     contentItem: RowLayout {
                         Image { source: player.videoFill ? "icons/fill.svg" : "icons/fit.svg"; sourceSize: Qt.size(Math.ceil(18 * Screen.devicePixelRatio), Math.ceil(18 * Screen.devicePixelRatio)); Layout.preferredWidth: 18; Layout.preferredHeight: 18; fillMode: Image.PreserveAspectFit }
                         Text { text: fillOption.text; color: window.ink; font.pixelSize: 13; Layout.fillWidth: true }
@@ -1301,24 +1598,39 @@ ApplicationWindow {
                     }
                 }
                 Button {
+                    id: accentOption
+                    width: settingsPopup.width - 26; height: 42
+                    text: "Use system accent"
+                    hoverEnabled: true
+                    Accessible.name: text
+                    onClicked: themeAccent.enabled = !themeAccent.enabled
+                    background: Rectangle { radius: 11; color: accentOption.hovered ? "#28545a" : themeAccent.enabled ? "#20545b" : "transparent" }
+                    contentItem: RowLayout {
+                        Rectangle { width: 17; height: 17; radius: 6; color: window.accent; Layout.preferredWidth: 17; Layout.preferredHeight: 17 }
+                        Text { text: accentOption.text; color: window.ink; font.pixelSize: 13; Layout.fillWidth: true }
+                        Text { text: themeAccent.enabled ? "ON" : "OFF"; color: themeAccent.enabled ? window.accent : window.mutedInk; font.pixelSize: 11; font.weight: Font.DemiBold }
+                    }
+                }
+                Button {
                     id: ratioOption
                     width: settingsPopup.width - 26; height: 42
                     hoverEnabled: true
                     onClicked: { settingsPopup.close(); ratioPopup.open() }
-                    background: Rectangle { radius: 11; color: ratioOption.hovered ? "#334f76" : "transparent" }
+                    background: Rectangle { radius: 11; color: ratioOption.hovered ? "#28545a" : "transparent" }
                     contentItem: RowLayout {
                         Text { text: "▣"; color: window.accent; font.pixelSize: 19; Layout.preferredWidth: 18 }
                         Text { text: "Canvas ratio"; color: window.ink; font.pixelSize: 13; Layout.fillWidth: true }
                         Text { text: window.canvasLabel; color: window.mutedInk; font.pixelSize: 11 }
                     }
                 }
-                Rectangle { width: settingsPopup.width - 28; height: 1; color: "#30ffffff" }
+                Rectangle { width: settingsPopup.width - 28; height: 1; color: "#60344955" }
                 Button {
                     id: defaultOption
                     width: settingsPopup.width - 26; height: 40
+                    visible: desktopIntegration.defaultStatusReady && !desktopIntegration.defaultVideoPlayer
                     hoverEnabled: true
                     onClicked: { settingsPopup.close(); window.makeDefaultPlayer() }
-                    background: Rectangle { radius: 11; color: defaultOption.hovered ? "#334f76" : "transparent" }
+                    background: Rectangle { radius: 11; color: defaultOption.hovered ? "#28545a" : "transparent" }
                     contentItem: RowLayout {
                         Text { text: "◉"; color: window.accent; font.pixelSize: 17; Layout.preferredWidth: 18 }
                         Text { text: "Make default video player"; color: window.ink; font.pixelSize: 13; Layout.fillWidth: true }
@@ -1330,7 +1642,7 @@ ApplicationWindow {
                     text: "Save video frame…"
                     hoverEnabled: true
                     onClicked: { settingsPopup.close(); screenshotDialog.open() }
-                    background: Rectangle { radius: 11; color: screenshotOption.hovered ? "#334f76" : "transparent" }
+                    background: Rectangle { radius: 11; color: screenshotOption.hovered ? "#28545a" : "transparent" }
                     contentItem: RowLayout {
                         Image { source: "icons/camera.svg"; sourceSize: Qt.size(Math.ceil(18 * Screen.devicePixelRatio), Math.ceil(18 * Screen.devicePixelRatio)); Layout.preferredWidth: 18; Layout.preferredHeight: 18; fillMode: Image.PreserveAspectFit }
                         Text { text: screenshotOption.text; color: window.ink; font.pixelSize: 13; Layout.fillWidth: true }
@@ -1342,7 +1654,7 @@ ApplicationWindow {
                     text: "Load subtitle file…"
                     hoverEnabled: true
                     onClicked: { settingsPopup.close(); subtitleDialog.open() }
-                    background: Rectangle { radius: 11; color: subtitleOption.hovered ? "#334f76" : "transparent" }
+                    background: Rectangle { radius: 11; color: subtitleOption.hovered ? "#28545a" : "transparent" }
                     contentItem: RowLayout {
                         Image { source: "icons/captions.svg"; sourceSize: Qt.size(Math.ceil(18 * Screen.devicePixelRatio), Math.ceil(18 * Screen.devicePixelRatio)); Layout.preferredWidth: 18; Layout.preferredHeight: 18; fillMode: Image.PreserveAspectFit }
                         Text { text: subtitleOption.text; color: window.ink; font.pixelSize: 13; Layout.fillWidth: true }
@@ -1354,7 +1666,7 @@ ApplicationWindow {
                     text: "Keyboard shortcuts"
                     hoverEnabled: true
                     onClicked: { settingsPopup.close(); helpPopup.open() }
-                    background: Rectangle { radius: 11; color: shortcutsOption.hovered ? "#334f76" : "transparent" }
+                    background: Rectangle { radius: 11; color: shortcutsOption.hovered ? "#28545a" : "transparent" }
                     contentItem: RowLayout {
                         Image { source: "icons/help.svg"; sourceSize: Qt.size(Math.ceil(18 * Screen.devicePixelRatio), Math.ceil(18 * Screen.devicePixelRatio)); Layout.preferredWidth: 18; Layout.preferredHeight: 18; fillMode: Image.PreserveAspectFit }
                         Text { text: shortcutsOption.text; color: window.ink; font.pixelSize: 13; Layout.fillWidth: true }
@@ -1366,16 +1678,29 @@ ApplicationWindow {
 
     Rectangle {
         id: toast
-        visible: window.toastMessage.length > 0
+        opacity: 0
+        scale: 0.92
+        visible: opacity > 0
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
         anchors.bottomMargin: window.miniMode ? 104 : window.overlayVisible ? 128 : 24
         width: toastText.implicitWidth + 34
         height: 39
         radius: 13
-        color: "#ed192438"
-        border.color: "#6686b5"
+        color: "#ed152d39"
+        border.color: "#4a877f"
         z: 11
         Text { id: toastText; anchors.centerIn: parent; text: window.toastMessage; color: window.ink; font.pixelSize: 13 }
+        SequentialAnimation {
+            id: toastAnimation
+            PropertyAction { target: toast; property: "opacity"; value: 0 }
+            PropertyAction { target: toast; property: "scale"; value: 0.92 }
+            ParallelAnimation {
+                NumberAnimation { target: toast; property: "opacity"; from: 0; to: 1; duration: 100 }
+                NumberAnimation { target: toast; property: "scale"; from: 0.92; to: 1; duration: 180; easing.type: Easing.OutCubic }
+            }
+            PauseAnimation { duration: 1160 }
+            NumberAnimation { target: toast; property: "opacity"; from: 1; to: 0; duration: 220 }
+        }
     }
 }
