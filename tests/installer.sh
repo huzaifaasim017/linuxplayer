@@ -44,8 +44,19 @@ cat > "$test_dir/bin/dpkg" <<'MOCK'
 #!/usr/bin/env bash
 if [[ "$1" == --print-architecture ]]; then
     printf '%s\n' "${MOCK_ARCH:-amd64}"
+elif [[ "$1" == -i ]]; then
+    printf '%s\n' "$2" >> "$MOCK_INSTALL_LOG"
 else
     /usr/bin/dpkg "$@"
+fi
+MOCK
+
+cat > "$test_dir/bin/dpkg-query" <<'MOCK'
+#!/usr/bin/env bash
+if [[ "${MOCK_INCOMPLETE:-0}" == 1 ]]; then
+    printf 'install ok unpacked'
+else
+    /usr/bin/dpkg-query "$@"
 fi
 MOCK
 
@@ -71,6 +82,12 @@ if MOCK_ARCH=amd64 MOCK_COMPAT=none bash "$repo_root/scripts/install.sh" > "$tes
 fi
 test ! -s "$MOCK_INSTALL_LOG"
 
+: > "$MOCK_INSTALL_LOG"
+MOCK_ARCH=amd64 MOCK_COMPAT=none MOCK_INCOMPLETE=1 bash "$repo_root/scripts/install.sh" > "$test_dir/output"
+grep -q 'linuxplayer_amd64.deb' "$MOCK_INSTALL_LOG"
+grep -q 'Replacing an incomplete' "$test_dir/output"
+
+: > "$MOCK_INSTALL_LOG"
 if MOCK_ARCH=amd64 MOCK_COMPAT=amd64 MOCK_BAD_CHECKSUM=1 bash "$repo_root/scripts/install.sh" > "$test_dir/output" 2>&1; then
     echo 'Installer accepted a bad checksum.' >&2
     exit 1

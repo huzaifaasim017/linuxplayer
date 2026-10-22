@@ -3,7 +3,7 @@
 set(CPACK_GENERATOR "DEB")
 set(CPACK_PACKAGE_NAME "linuxplayer")
 set(CPACK_PACKAGE_VENDOR "LinuxPlayer contributors")
-set(CPACK_PACKAGE_CONTACT "Huzaifa Asim <mohammadhuzaifa117@gmail.com>")
+set(CPACK_PACKAGE_CONTACT "TeamKrope <contact@teamkrope.com>")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Modern desktop video player")
 set(CPACK_DEBIAN_PACKAGE_SECTION "video")
 set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")

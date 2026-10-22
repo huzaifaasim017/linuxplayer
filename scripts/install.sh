@@ -15,7 +15,7 @@ if [[ "$architecture" != amd64 && "$architecture" != arm64 ]]; then
     exit 1
 fi
 
-release_url="https://github.com/huzaifaasim017/linuxplayer/releases/latest/download"
+release_url="https://github.com/teamkrope/linuxplayer/releases/latest/download"
 download_dir="$(mktemp -d)"
 trap 'rm -rf "$download_dir"' EXIT
 
@@ -41,6 +41,19 @@ if apt-get -s --no-remove install "$package" >"$download_dir/apt-check.log" 2>&1
     exit 0
 fi
 
+# Older packages could be left unpacked after a distribution upgrade changed
+# Qt's package names. APT refuses an upgrade while that old package is broken,
+# but dpkg can replace it with this release's compatible dependency alternatives.
+if [[ "$(dpkg-query -W -f='${Status}' linuxplayer 2>/dev/null || true)" == "install ok unpacked" ]]; then
+    echo "Replacing an incomplete LinuxPlayer installation..."
+    if [[ "${EUID:-$(id -u)}" -eq 0 ]]; then
+        dpkg -i "$package"
+    else
+        sudo dpkg -i "$package"
+    fi
+    exit 0
+fi
+
 echo "No current LinuxPlayer package fits this system's available dependencies." >&2
-echo "See https://github.com/huzaifaasim017/linuxplayer/blob/main/docs/BUILDING.md for other systems." >&2
+echo "See https://github.com/teamkrope/linuxplayer/blob/main/docs/BUILDING.md for other systems." >&2
 exit 1
