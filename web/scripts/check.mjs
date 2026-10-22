@@ -12,6 +12,7 @@ if (html.includes('Start screen') || script.includes('empty-v1-coast.png')) thro
 if (![html, download].every(page => page.includes('motion.js') && page.includes('footer-line'))) throw new Error('Shared motion or compact footer missing');
 if (!html.includes('showcase.css') || !html.includes('class="hero-shot"') || !html.includes('data-scroll-scene')) throw new Error('Product showcase is missing');
 if (!(html.indexOf('class="hero-copy"') < html.indexOf('class="hero-shot"') && html.indexOf('class="hero-shot"') < html.indexOf('class="hero-actions"'))) throw new Error('Hero must show title, product image, then actions');
+if (!html.includes('class="focus-gallery"') || !html.includes('class="focus-shot focus-shot-controls"') || !html.includes('class="hero-mark"') || !html.includes('class="download-mark"')) throw new Error('Showcase image mosaic or prominent brand marks missing');
 for (const text of ['LinuxPlayer', 'id="download"', 'id="features"', 'id="preview"', 'id="open-source"', 'application/ld+json', 'releases/latest/download/install.sh']) {
   if (!html.includes(text)) throw new Error(`Missing required site content: ${text}`);
 }
