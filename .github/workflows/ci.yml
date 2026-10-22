@@ -2,6 +2,8 @@ name: Build and package
 
 on:
   push:
+    branches:
+      - main
   pull_request:
 
 permissions:
@@ -77,3 +79,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y "./dist/linuxplayer_${{ matrix.arch }}.deb"
           QT_QPA_PLATFORM=offscreen linuxplayer --smoke-test
+
+  # Preserve the repository's required check name. It passes only after the
+  # architecture builds and newer-Ubuntu install checks have all succeeded.
+  ubuntu-2404:
+    needs: validate-newer
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "LinuxPlayer build and install matrix passed."
